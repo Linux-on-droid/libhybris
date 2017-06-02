@@ -65,18 +65,6 @@ debian/control: debian/control.in
 override_dh_auto_clean: debian/control
 	dh_auto_clean
 
-# --remote doesn't work with github so this needs to be run from a local checkout
-get-packaged-orig-source:
-	rm -rf $(PKG_source)-$(UPS_version)
-	rm -f $(PKG_source)-$(UPS_version).orig.tar.gz
-	git clone https://github.com/libhybris/libhybris.git $(PKG_source)-$(UPS_version)
-	cd $(PKG_source)-$(UPS_version) && git archive \
-		--format tar \
-		--prefix $(PKG_source)-$(UPS_version)/ \
-		$(GIT_rev) \
-		| gzip >../$(PKG_source)_$(UPS_version).orig.tar.gz
-	rm -rf $(PKG_source)-$(UPS_version)
-
 ANDROID_HEADERS_PATH = /usr/include/android
 DEFAULT_CONFIGURATION = \
 	--enable-wayland \

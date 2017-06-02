@@ -1,6 +1,6 @@
 Source: libhybris
 Priority: extra
-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Maintainer: Halium Developers <admin@halium.org>
 Build-Depends: debhelper (>= 9.0.0),
                autotools-dev,
                dh-autoreconf,
@@ -10,10 +10,10 @@ Build-Depends: debhelper (>= 9.0.0),
                pkg-config,
                libgles2-mesa-dev,
                libwayland-dev
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 Section: libs
-Vcs-Git: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris
-Vcs-Browser: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris/
+Vcs-Git: https://github.com/halium-packaging/libhybris.git
+Vcs-Browser: https://github.com/halium-packaging/libhybris
 
 Package: libandroid-properties1
 Architecture: armhf arm64 i386 amd64
