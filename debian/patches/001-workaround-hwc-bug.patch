@@ -1,0 +1,34 @@
+diff --git a/hybris/common/hooks.c b/hybris/common/hooks.c
+index 8a9cb2a..c1815ae 100644
+--- a/hybris/common/hooks.c
++++ b/hybris/common/hooks.c
+@@ -2415,7 +2415,29 @@ static const char *_hybris_hook_dlerror(void)
+     return android_dlerror();
+ }
+ 
++static __thread int stored_fd = -1;
++
++static void debug_hwc_info(void *s, int debug_tag, const char *format, ...)
++{
++    va_list args;
++    va_start(args, format);
++    if(strstr(format, "Commit Input") != NULL)
++    {
++        // this means hwcomposer is leaving the function Commit soon. the last fd that was dupped is leaked (and never used) so close it.
++        close(stored_fd);
++    }
++    va_end(args);
++}
++
++int _hybris_hook_dup(int fd)
++{
++    stored_fd = dup(fd);
++    return stored_fd;
++}
++
+ static struct _hook hooks_common[] = {
++    HOOK_TO(_ZN3sdm15HWCDebugHandler4InfoENS_8DebugTagEPKcz, debug_hwc_info),
++    HOOK_INDIRECT(dup),
+ 
+     HOOK_DIRECT(property_get),
+     HOOK_DIRECT(property_set),
