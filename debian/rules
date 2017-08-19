@@ -92,11 +92,13 @@ ARCH_CONFIGURATION = \
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), i386))
 ARCH_CONFIGURATION = \
-	--enable-arch=x86
+	--enable-arch=x86 \
+	--enable-experimental
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), amd64))
 ARCH_CONFIGURATION = \
-	--enable-arch=x86
+	--enable-arch=x86 \
+	--enable-experimental
 endif
 
 override_dh_auto_configure:
