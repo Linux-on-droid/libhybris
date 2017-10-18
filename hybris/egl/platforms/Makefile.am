@@ -11,4 +11,4 @@ if WANT_WAYLAND
 SUBDIRS += wayland
 endif
 
-
+SUBDIRS += x11
