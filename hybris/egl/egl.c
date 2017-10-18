@@ -77,6 +77,9 @@ static void (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageOES image
 
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
 
+static EGLBoolean  (*_eglGetConfigAttrib)(EGLDisplay dpy, EGLConfig config,
+		EGLint attribute, EGLint *value) = NULL;
+
 static void _init_androidegl()
 {
 	egl_handle = (void *) android_dlopen(getenv("LIBEGL") ? getenv("LIBEGL") : "libEGL.so", RTLD_LAZY);
@@ -290,7 +293,6 @@ const char * eglQueryString(EGLDisplay dpy, EGLint name)
 
 HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglGetConfigs, EGLDisplay, EGLConfig *, EGLint, EGLint *);
 HYBRIS_IMPLEMENT_FUNCTION5(egl, EGLBoolean, eglChooseConfig, EGLDisplay, const EGLint *, EGLConfig *, EGLint, EGLint *);
-HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglGetConfigAttrib, EGLDisplay, EGLConfig, EGLint, EGLint *);
 
 EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 		EGLNativeWindowType win,
@@ -614,6 +616,18 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	}
 
 	return ret;
+}
+
+EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value)
+{
+	HYBRIS_DLSYSM(egl, &_eglGetConfigAttrib, "eglGetConfigAttrib");
+	struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
+
+    EGLBoolean ret = ws_eglGetConfigAttrib(display, config, attribute, value);
+    if (ret == EGL_FALSE) {
+        return (*_eglGetConfigAttrib)(dpy, config, attribute, value);
+    }
+    return ret;
 }
 
 // vim:ts=4:sw=4:noexpandtab

@@ -37,6 +37,7 @@ struct ws_module {
 	void (*prepareSwap)(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects);
 	void (*finishSwap)(EGLDisplay dpy, EGLNativeWindowType win);
 	void (*setSwapInterval)(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
+    EGLBoolean (*eglGetConfigAttrib)(struct _EGLDisplay *display, EGLConfig config, EGLint attribute, EGLint *value);
 };
 
 EGLBoolean ws_init(const char * egl_platform);
@@ -51,5 +52,6 @@ const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eg
 void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects);
 void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win);
 void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
+EGLBoolean ws_eglGetConfigAttrib(struct _EGLDisplay *display, EGLConfig config, EGLint attribute, EGLint *value);
 
 #endif
