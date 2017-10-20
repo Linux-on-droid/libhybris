@@ -1,10 +1,8 @@
-diff --git a/hybris/common/hooks.c b/hybris/common/hooks.c
-index 8a9cb2a..c1815ae 100644
---- a/hybris/common/hooks.c
-+++ b/hybris/common/hooks.c
-@@ -2415,7 +2415,29 @@ static const char *_hybris_hook_dlerror(void)
-     return android_dlerror();
- }
+--- libhybris-0.1.0+git20171020.orig/hybris/common/hooks.c
++++ libhybris-0.1.0+git20171020/hybris/common/hooks.c
+@@ -2433,7 +2433,29 @@ static const char *_hybris_hook_dlerror(
+ #define cfree free
+ #endif
  
 +static __thread int stored_fd = -1;
 +
