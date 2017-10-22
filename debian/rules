@@ -47,14 +47,14 @@ ANDROID_HEADERS_PATH = /usr/include/android
 DEFAULT_CONFIGURATION = \
 	--enable-wayland \
 	--with-android-headers=$(ANDROID_HEADERS_PATH) \
-	--enable-property-cache
+	--enable-property-cache \
+	--enable-experimental
 ARCH_CONFIGURATION =
 
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
 ARCH_CONFIGURATION = \
 	--enable-arch=arm \
-	--enable-mali-quirks \
-	--enable-experimental
+	--enable-mali-quirks
 # We enable the linker selection overrides here as we want to stay
 # with the jb linker on a range of selected production devices to
 # not cause any extra risk for regressions on them. They will
@@ -65,18 +65,15 @@ endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
 ARCH_CONFIGURATION = \
 	--enable-arch=arm64 \
-	--enable-mali-quirks \
-	--enable-experimental
+	--enable-mali-quirks
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), i386))
 ARCH_CONFIGURATION = \
-	--enable-arch=x86 \
-	--enable-experimental
+	--enable-arch=x86
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), amd64))
 ARCH_CONFIGURATION = \
-	--enable-arch=x86 \
-	--enable-experimental
+	--enable-arch=x86
 endif
 
 override_dh_auto_configure:
