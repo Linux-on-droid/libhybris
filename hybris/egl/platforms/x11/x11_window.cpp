@@ -436,6 +436,13 @@ unsigned int X11NativeWindow::transformHint() const {
     return 0;
 }
 
+/*
+ * returns the current usage of this window
+ */
+unsigned int X11NativeWindow::getUsage() const {
+    return m_usage;
+}
+
 int X11NativeWindow::setBuffersFormat(int format) {
 //     if (format != m_format)
 //     {
