@@ -1,6 +1,6 @@
 pkglib_LTLIBRARIES = eglplatform_x11.la
 
-eglplatform_x11_la_SOURCES = eglplatform_x11.cpp x11_window.cpp
+eglplatform_x11_la_SOURCES = eglplatform_x11.cpp x11_window.cpp xcb_drihybris.c
 eglplatform_x11_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/include \
@@ -31,7 +31,7 @@ eglplatform_x11_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la \
-	-lX11 -lXext
+	-lXext -lxcb -lX11-xcb
 
 if HAS_ANDROID_4_2_0
 eglplatform_x11_la_LDFLAGS += $(top_builddir)/libsync/libsync.la

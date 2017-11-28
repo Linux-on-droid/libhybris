@@ -30,7 +30,7 @@
 #include <linux/fb.h>
 #include <hardware/gralloc.h>
 extern "C" {
-#include <X11/Xlib.h>
+#include <X11/Xlib-xcb.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 #include <pthread.h>
@@ -54,15 +54,15 @@ public:
         this->busy = 0;
         this->other = other;
         this->youngest = 0;
+        this->pixmap = 0;
     }
 
     int busy;
     int youngest;
     ANativeWindowBuffer *other;
+    xcb_pixmap_t pixmap;
 
-    virtual void init(struct android_wlegl *android_wlegl,
-                    struct wl_display *display,
-                    struct wl_event_queue *queue) {}
+    void pixmap_from_buffer(xcb_connection_t *connection, xcb_drawable_t drawable);
 };
 
 class ClientX11Buffer : public X11NativeWindowBuffer
@@ -95,6 +95,7 @@ protected:
         assert(alloc_ok == 0);
         this->youngest = 0;
         this->common.incRef(&this->common);
+        this->pixmap = 0;
     }
 
     ~ClientX11Buffer()
@@ -102,10 +103,6 @@ protected:
         if (this->m_alloc)
             m_alloc->free(m_alloc, this->handle);
     }
-
-    void init(struct android_wlegl *android_wlegl,
-                                    struct wl_display *display,
-                                    struct wl_event_queue *queue);
 
 protected:
     void* vaddr;
@@ -129,7 +126,6 @@ public:
     virtual int setSwapInterval(int interval);
     void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects);
     void finishSwap();
-    void copyToX11(X11NativeWindowBuffer *wnb);
 
 protected:
     // overloads from BaseNativeWindow
@@ -158,6 +154,9 @@ private:
     void destroyBuffers();
     int readQueue(bool block);
 
+    void copyToX11(X11NativeWindowBuffer *wnb);
+    void tryEnableDRIHybris();
+
     std::list<X11NativeWindowBuffer *> m_bufList;
     std::list<X11NativeWindowBuffer *> fronted;
     std::list<X11NativeWindowBuffer *> posted;
@@ -169,7 +168,10 @@ private:
     XImage *m_image;
     XShmSegmentInfo m_shminfo;
     GC m_gc;
+    xcb_connection_t *m_connection;
+    xcb_gcontext_t m_xcb_gc;
     bool m_useShm;
+    bool m_haveDRIHybris;
     
     X11NativeWindowBuffer *m_lastBuffer;
     unsigned int m_width;

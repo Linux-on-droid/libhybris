@@ -33,6 +33,7 @@
 
 #include "logging.h"
 #include <eglhybris.h>
+#include "xcb_drihybris.h"
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
 extern "C" {
@@ -65,6 +66,7 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
     HYBRIS_TRACE_BEGIN("x11-platform", "create_window", "");
     this->m_window = xl_window;
     this->m_display = xl_display;
+    this->m_connection = XGetXCBConnection(xl_display);
     this->m_image = 0;
     this->m_useShm = true;
     this->m_format = HAL_PIXEL_FORMAT_BGRA_8888;
@@ -119,6 +121,12 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
 
     XGCValues gcvalues;
     m_gc = XCreateGC(m_display, m_window, 0, &gcvalues);
+
+    m_xcb_gc = xcb_generate_id(m_connection);
+    xcb_create_gc(m_connection, m_xcb_gc, m_window, 0, 0);
+
+    m_haveDRIHybris = false;
+    tryEnableDRIHybris();
 
     m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_SW_READ_OFTEN;
     pthread_mutex_init(&mutex, NULL);
@@ -306,7 +314,32 @@ void X11NativeWindow::finishSwap()
     m_damage_n_rects = 0;
     unlock();
 
-    copyToX11(wnb);
+    if (m_haveDRIHybris) {
+        if (wnb->pixmap == 0)
+            wnb->pixmap_from_buffer(m_connection, m_window);
+
+        xcb_copy_area(m_connection, wnb->pixmap, m_window, m_xcb_gc,
+                        0, 0, 0, 0, /* src_x, src_y, dst_x, dst_y */
+                        m_width, m_height);
+        xcb_flush(m_connection);
+
+        lock();
+
+        ++m_freeBufs;
+        HYBRIS_TRACE_COUNTER("x11-platform", "m_freeBufs", "%i", m_freeBufs);
+
+        std::list<X11NativeWindowBuffer *>::iterator it;
+        for (it = m_bufList.begin(); it != m_bufList.end(); it++)
+        {
+            (*it)->youngest = 0;
+        }
+        wnb->youngest = 1;
+        wnb->busy = 0;
+
+        unlock();
+    } else {
+        copyToX11(wnb);
+    }
 }
 
 static int debugenvchecked = 0;
@@ -495,7 +528,6 @@ X11NativeWindowBuffer *X11NativeWindow::addBuffer() {
     return wnb;
 }
 
-
 int X11NativeWindow::setBufferCount(int cnt) {
     int start = 0;
 
@@ -527,9 +559,6 @@ int X11NativeWindow::setBufferCount(int cnt) {
 
     return NO_ERROR;
 }
-
-
-
 
 int X11NativeWindow::setBuffersDimensions(int width, int height) {
     if (m_width != width || m_height != height)
@@ -623,10 +652,41 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
     unlock();
 }
 
-void ClientX11Buffer::init(struct android_wlegl *android_wlegl,
-                                    struct wl_display *display,
-                                    struct wl_event_queue *queue)
+void X11NativeWindow::tryEnableDRIHybris()
 {
+   const xcb_query_extension_reply_t *extension;
+
+   xcb_prefetch_extension_data (m_connection, &xcb_drihybris_id);
+
+   extension = xcb_get_extension_data(m_connection, &xcb_drihybris_id);
+   if (!(extension && extension->present))
+      return;
+
+   m_haveDRIHybris = true;
+   // HYBRIS_PIXEL_FORMAT_RGBA_8888 is used in glamor for buffer import
+   m_format = HAL_PIXEL_FORMAT_RGBA_8888;
+}
+
+void X11NativeWindowBuffer::pixmap_from_buffer(xcb_connection_t *connection, xcb_drawable_t drawable)
+{
+    int32_t * fds;
+    fds = (int32_t *)calloc(handle->numFds, sizeof(int));
+    for (int i = 0; i < handle->numFds; i++) {
+        fds[i] = dup(handle->data[i]);
+    }
+
+    xcb_drihybris_pixmap_from_buffer_checked(connection,
+                               (pixmap = xcb_generate_id(connection)),
+                               drawable,
+                               stride * height * 4,
+                               this->width, height, stride,
+                               32, 32,
+                               handle->numInts,
+                               handle->numFds,
+                               (const uint32_t *)(handle->data + handle->numFds),
+                               (const int32_t *)fds);
+    xcb_flush(connection);
+    free(fds);
 }
 
 // vim: noai:ts=4:sw=4:ss=4:expandtab
