@@ -25,7 +25,7 @@ extern "C" {
 extern xcb_extension_t xcb_drihybris_id;
 
 /** Opcode for xcb_drihybris_pixmap_from_buffer. */
-#define XCB_DRIHYBRIS_PIXMAP_FROM_BUFFER 2
+#define XCB_DRIHYBRIS_PIXMAP_FROM_BUFFER 1
 
 /**
  * @brief xcb_drihybris_pixmap_from_buffer_request_t

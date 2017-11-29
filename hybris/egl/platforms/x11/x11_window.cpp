@@ -125,6 +125,7 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
     m_xcb_gc = xcb_generate_id(m_connection);
     xcb_create_gc(m_connection, m_xcb_gc, m_window, 0, 0);
 
+    m_specialEvent = 0;
     m_haveDRIHybris = false;
     tryEnableDRIHybris();
 
@@ -172,17 +173,18 @@ int X11NativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd
     X11NativeWindowBuffer *wnb=NULL;
     TRACE("%p", buffer);
 
-    lock();
     readQueue(false);
 
     HYBRIS_TRACE_BEGIN("x11-platform", "dequeueBuffer_wait_for_buffer", "");
 
     HYBRIS_TRACE_COUNTER("x11-platform", "m_freeBufs", "%i", m_freeBufs);
 
-    while (m_freeBufs==0) {
+    while (m_freeBufs == 0) {
         HYBRIS_TRACE_COUNTER("x11-platform", "m_freeBufs", "%i", m_freeBufs);
         readQueue(true);
     }
+
+    lock();
 
     std::list<X11NativeWindowBuffer *>::iterator it = m_bufList.begin();
     for (; it != m_bufList.end(); it++)
@@ -254,11 +256,18 @@ int X11NativeWindow::readQueue(bool block)
     int ret = 0;
 
     if (++m_queueReads == 1) {
-//         if (block) {
-//             ret = wl_display_dispatch_queue(m_display, wl_queue);
-//         } else {
-//             ret = wl_display_dispatch_queue_pending(m_display, wl_queue);
-//         }
+        if (m_specialEvent) {
+            xcb_generic_event_t    *ev;
+
+            if (!block)
+            {
+                while ((ev = xcb_poll_for_special_event(m_connection,
+                                                        m_specialEvent)) != NULL) {
+                    xcb_present_generic_event_t *ge = (xcb_present_generic_event_t *) ev;
+                    handlePresentEvent(ge);
+                }
+            }
+        }
 
         // all threads waiting on the false branch will wake and return now, so we
         // can safely set m_queueReads to 0 here instead of relying on every thread
@@ -271,11 +280,6 @@ int X11NativeWindow::readQueue(bool block)
 
         pthread_cond_broadcast(&cond);
 
-//         if (ret < 0) {
-//             TRACE("wl_display_dispatch_queue returned an error");
-//             check_fatal_error(m_display);
-//             return ret;
-//         }
     } else if (block) {
         while (m_queueReads > 0) {
             pthread_cond_wait(&cond, &mutex);
@@ -654,17 +658,50 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
 
 void X11NativeWindow::tryEnableDRIHybris()
 {
-   const xcb_query_extension_reply_t *extension;
+    const xcb_query_extension_reply_t *extension;
+    xcb_void_cookie_t cookie;
+    xcb_generic_error_t *error;
 
-   xcb_prefetch_extension_data (m_connection, &xcb_drihybris_id);
+    xcb_prefetch_extension_data (m_connection, &xcb_drihybris_id);
+    xcb_prefetch_extension_data (m_connection, &xcb_present_id);
 
-   extension = xcb_get_extension_data(m_connection, &xcb_drihybris_id);
-   if (!(extension && extension->present))
-      return;
+    extension = xcb_get_extension_data(m_connection, &xcb_drihybris_id);
+    if (!(extension && extension->present))
+        return;
 
-   m_haveDRIHybris = true;
-   // HYBRIS_PIXEL_FORMAT_RGBA_8888 is used in glamor for buffer import
-   m_format = HAL_PIXEL_FORMAT_RGBA_8888;
+    extension = xcb_get_extension_data(m_connection, &xcb_present_id);
+    if (!(extension && extension->present))
+        return;
+
+    m_specialEventId = xcb_generate_id(m_connection);
+    m_specialEvent = xcb_register_for_special_xge(m_connection,
+                            &xcb_present_id, m_specialEventId, NULL);
+
+    cookie = xcb_present_select_input_checked(m_connection,
+            m_specialEventId, m_window,
+            XCB_PRESENT_EVENT_MASK_COMPLETE_NOTIFY |
+            XCB_PRESENT_EVENT_MASK_CONFIGURE_NOTIFY);
+
+    error = xcb_request_check(m_connection, cookie);
+    if (error) {
+        return;
+    }
+
+    m_haveDRIHybris = true;
+    // HYBRIS_PIXEL_FORMAT_RGBA_8888 is used in glamor for buffer import
+    m_format = HAL_PIXEL_FORMAT_RGBA_8888;
+}
+
+void X11NativeWindow::handlePresentEvent(xcb_present_generic_event_t *ge)
+{
+    switch (ge->evtype) {
+    case XCB_PRESENT_CONFIGURE_NOTIFY: {
+        xcb_present_configure_notify_event_t *ce = (xcb_present_configure_notify_event_t *) ge;
+        printf("XCB_PRESENT_CONFIGURE_NOTIFY: %dx%d\n", ce->width, ce->height);
+        resize(ce->width, ce->height);
+        break;
+    }
+    }
 }
 
 void X11NativeWindowBuffer::pixmap_from_buffer(xcb_connection_t *connection, xcb_drawable_t drawable)

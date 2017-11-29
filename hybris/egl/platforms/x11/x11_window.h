@@ -31,6 +31,7 @@
 #include <hardware/gralloc.h>
 extern "C" {
 #include <X11/Xlib-xcb.h>
+#include <xcb/present.h>
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 #include <pthread.h>
@@ -156,6 +157,7 @@ private:
 
     void copyToX11(X11NativeWindowBuffer *wnb);
     void tryEnableDRIHybris();
+    void handlePresentEvent(xcb_present_generic_event_t *ge);
 
     std::list<X11NativeWindowBuffer *> m_bufList;
     std::list<X11NativeWindowBuffer *> fronted;
@@ -168,8 +170,12 @@ private:
     XImage *m_image;
     XShmSegmentInfo m_shminfo;
     GC m_gc;
+
     xcb_connection_t *m_connection;
     xcb_gcontext_t m_xcb_gc;
+    xcb_present_event_t m_specialEventId;
+    xcb_special_event_t *m_specialEvent;
+
     bool m_useShm;
     bool m_haveDRIHybris;
     
@@ -180,7 +186,7 @@ private:
     unsigned int m_defaultWidth;
     unsigned int m_defaultHeight;
     unsigned int m_usage;
-    struct android_wlegl *m_android_wlegl;
+
     alloc_device_t* m_alloc;
     pthread_mutex_t mutex;
     pthread_cond_t cond;

@@ -31,7 +31,7 @@ eglplatform_x11_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la \
-	-lXext -lxcb -lX11-xcb
+	-lXext -lxcb -lX11-xcb -lxcb-present
 
 if HAS_ANDROID_4_2_0
 eglplatform_x11_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
