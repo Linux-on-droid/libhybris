@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20171107-1) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20171109-1) UNRELEASED; urgency=medium
 
   * New snapshot
   * Remove ubuntu vivid compatibility extras
