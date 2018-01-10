@@ -1,8 +1,8 @@
-libhybris (0.1.0+git20180104-1) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20180110-1) UNRELEASED; urgency=medium
 
   * New snapshot
   * Remove ubuntu vivid compatibility extras
-  * Standards-version 4.1.1
+  * Standards-version 4.1.3
   * enable experimental on all architectures
 
  -- JBBgameich <jbb.mail@gmx.de>  Fri, 20 Oct 2017 15:52:58 +0200
