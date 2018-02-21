@@ -44,8 +44,8 @@ extern "C" {
 void X11NativeWindow::resize(unsigned int width, unsigned int height)
 {
     lock();
-    this->m_defaultWidth = width;
-    this->m_defaultHeight = height;
+    this->m_defaultWidth = this->m_width = width;
+    this->m_defaultHeight = this->m_height = height;
     unlock();
 }
 
@@ -94,6 +94,7 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
 
     m_width = window_attributes.width;
     m_height = window_attributes.height;
+    m_depth = window_attributes.depth;
 
     const char *env = getenv("HYBRIS_X11_FORCE_WIDTH");
     if (env != NULL)
@@ -299,6 +300,7 @@ void X11NativeWindow::prepareSwap(EGLint *damage_rects, EGLint damage_n_rects)
 
 void X11NativeWindow::finishSwap()
 {
+    static int serial = 0;
     int ret = 0;
     lock();
 
@@ -312,7 +314,7 @@ void X11NativeWindow::finishSwap()
     m_lastBuffer = wnb;
     wnb->busy = 1;
 
-    fronted.push_back(wnb);
+    // fronted.push_back(wnb);
 
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
@@ -322,9 +324,21 @@ void X11NativeWindow::finishSwap()
         if (wnb->pixmap == 0)
             wnb->pixmap_from_buffer(m_connection, m_window);
 
-        xcb_copy_area(m_connection, wnb->pixmap, m_window, m_xcb_gc,
-                        0, 0, 0, 0, /* src_x, src_y, dst_x, dst_y */
-                        m_width, m_height);
+        xcb_present_pixmap(m_connection,
+                            m_window,
+                            wnb->pixmap,
+                            (uint32_t) serial++,
+                            0,                                    /* valid */
+                            0,                                    /* update */
+                            0,                                    /* x_off */
+                            0,                                    /* y_off */
+                            None,                                 /* target_crtc */
+                            None,
+                            NULL,
+                            XCB_PRESENT_OPTION_NONE,
+                            0,
+                            0,
+                            0, 0, NULL);
         xcb_flush(m_connection);
 
         lock();
@@ -481,14 +495,14 @@ unsigned int X11NativeWindow::getUsage() const {
 }
 
 int X11NativeWindow::setBuffersFormat(int format) {
-//     if (format != m_format)
-//     {
-//         TRACE("old-format:x%x new-format:x%x", m_format, format);
-//         m_format = format;
-//         /* Buffers will be re-allocated when dequeued */
-//     } else {
-//         TRACE("format:x%x", format);
-//     }
+    if (format != m_format)
+    {
+        TRACE("old-format:x%x new-format:x%x", m_format, format);
+        m_format = format;
+        /* Buffers will be re-allocated when dequeued */
+    } else {
+        TRACE("format:x%x", format);
+    }
     return NO_ERROR;
 }
 
@@ -522,7 +536,7 @@ X11NativeWindowBuffer *X11NativeWindow::addBuffer() {
 
     X11NativeWindowBuffer *wnb;
 
-    wnb = new ClientX11Buffer(m_alloc, m_width, m_height, m_format, m_usage);
+    wnb = new ClientX11Buffer(m_alloc, m_width, m_height, m_format, m_usage, m_depth);
     m_bufList.push_back(wnb);
     ++m_freeBufs;
 
@@ -717,7 +731,7 @@ void X11NativeWindowBuffer::pixmap_from_buffer(xcb_connection_t *connection, xcb
                                drawable,
                                stride * height * 4,
                                this->width, height, stride,
-                               32, 32,
+                               windowDepth, 32,
                                handle->numInts,
                                handle->numFds,
                                (const uint32_t *)(handle->data + handle->numFds),

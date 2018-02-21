@@ -61,6 +61,7 @@ public:
     int busy;
     int youngest;
     ANativeWindowBuffer *other;
+    int windowDepth;
     xcb_pixmap_t pixmap;
 
     void pixmap_from_buffer(xcb_connection_t *connection, xcb_drawable_t drawable);
@@ -78,7 +79,8 @@ protected:
                             unsigned int width,
                             unsigned int height,
                             unsigned int format,
-                            unsigned int usage)
+                            unsigned int usage,
+                            unsigned int windowDepth)
     {
         // Base members
         ANativeWindowBuffer::width = width;
@@ -96,6 +98,8 @@ protected:
         assert(alloc_ok == 0);
         this->youngest = 0;
         this->common.incRef(&this->common);
+
+        this->windowDepth = windowDepth;
         this->pixmap = 0;
     }
 
@@ -182,6 +186,7 @@ private:
     X11NativeWindowBuffer *m_lastBuffer;
     unsigned int m_width;
     unsigned int m_height;
+    unsigned int m_depth;
     unsigned int m_format;
     unsigned int m_defaultWidth;
     unsigned int m_defaultHeight;
