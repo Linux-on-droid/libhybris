@@ -1,7 +1,7 @@
 Source: libhybris
 Priority: extra
 Maintainer: Halium Developers <admin@halium.org>
-Build-Depends: debhelper (>= 9.0.0),
+Build-Depends: debhelper (>= 11),
                autotools-dev,
                dh-autoreconf,
                android-headers (>= 4.4.2),

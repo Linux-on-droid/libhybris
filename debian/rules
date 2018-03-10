@@ -110,8 +110,5 @@ override_dh_install:
 	# empty ld.so.conf for the fake multi-arch alternative
 	echo "" > "$(CURDIR)/debian/$(PKG_driver)/$(alt_ld_so_conf_path)"
 
-override_dh_autoreconf:
-	NOCONFIGURE=1 dh_autoreconf ./hybris/autogen.sh
-
 %:
 	dh $@ --with quilt,autoreconf --sourcedirectory=hybris
