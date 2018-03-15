@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20180206-1) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20180309-1) UNRELEASED; urgency=medium
 
   * New snapshot
   * Remove ubuntu vivid compatibility extras
@@ -6,7 +6,7 @@ libhybris (0.1.0+git20180206-1) UNRELEASED; urgency=medium
   * enable experimental on all architectures
   * Remove ubuntu-linker-overrides
 
- -- JBBgameich <jbb.mail@gmx.de>  Fri, 20 Oct 2017 15:52:58 +0200
+ -- JBBgameich <jbb.mail@gmx.de>  Thu, 15 Mar 2018 15:26:21 +0100
 
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu23) yakkety; urgency=medium
 
