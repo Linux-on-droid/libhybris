@@ -348,7 +348,7 @@ License: Apache-2.0
 
 Files: utils/*
 Copyright: 2013, Jolla Ltd
-  2012, Thomas Perl <m@thp.io>; 2012-10-19 libhybris version:
+  2012, Thomas Perl <m@thp.io>
 License: BSD-2-clause
 
 Files: utils/generate_wrapper_macros.py
