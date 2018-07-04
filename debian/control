@@ -2,9 +2,7 @@ Source: libhybris
 Priority: extra
 Maintainer: Halium Developers <admin@halium.org>
 Build-Depends: android-headers (>= 4.4.2),
-               autotools-dev,
                debhelper (>= 11),
-               dh-autoreconf,
                libgles2-mesa-dev,
                libwayland-dev,
                ocl-icd-opencl-dev,

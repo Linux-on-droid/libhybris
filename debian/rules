@@ -111,4 +111,4 @@ override_dh_install:
 	echo "" > "$(CURDIR)/debian/$(PKG_driver)/$(alt_ld_so_conf_path)"
 
 %:
-	dh $@ --with quilt,autoreconf --sourcedirectory=hybris
+	dh $@ --with autoreconf --sourcedirectory=hybris
