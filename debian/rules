@@ -3,19 +3,11 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+include /usr/share/dpkg/pkg-info.mk
+include /usr/share/dpkg/architecture.mk
+
 # Package names
 PKG_driver      := libhybris
-PKG_driver_dev  := libhybris-dev
-PKG_version     := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
-PKG_source      := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
-PKG_distro      := $(shell dpkg-parsechangelog | sed -n 's/^Distribution: //p')
-UPS_version     := $(shell echo '$(PKG_version)' | sed 's/.*://; s/-[^-]*$$//')
-GIT_rev         := $(shell echo '$(UPS_version)' | sed 's/.*+//')
-
-DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 # Strong needs at least gcc 4.9
 export DEB_BUILD_MAINT_OPTIONS=hardening=-stackprotectorstrong
@@ -95,8 +87,8 @@ override_dh_install:
 			-e "s|#PKGCONFIGDIR#|$(PKG_configdir)|g" \
 			-e "s|#PKGLIBDIR#|$(PKG_libdir)|g" \
 			-e "s|#DRIVERNAME#|$(PKG_driver)|g" \
-			-e "s|#DRIVERSRCNAME#|$(PKG_source)|g" \
-			-e "s|#VERSION#|$(PKG_version)|g" \
+			-e "s|#DRIVERSRCNAME#|$(DEB_SOURCE)|g" \
+			-e "s|#VERSION#|$(DEB_VERSION)|g" \
 			-e "s|#INCLUDEDIR#|$(includedir)|g" \
 			-e "s|#DEB_HOST_MULTIARCH#|$(DEB_HOST_MULTIARCH)|g" \
 			debian/$$i.in > debian/$$i; \
