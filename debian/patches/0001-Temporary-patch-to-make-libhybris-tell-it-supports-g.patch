@@ -1,0 +1,31 @@
+From 12c75ee6c3b16f3a339641c1b912651ab0cbe1ff Mon Sep 17 00:00:00 2001
+From: Bhushan Shah <bhush94@gmail.com>
+Date: Fri, 19 Oct 2018 15:49:10 +0530
+Subject: [PATCH] Temporary patch to make libhybris tell it supports glesv3
+
+---
+ hybris/glesv2/glesv2.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/hybris/glesv2/glesv2.c b/hybris/glesv2/glesv2.c
+index 41113cf..aafced5 100644
+--- a/hybris/glesv2/glesv2.c
++++ b/hybris/glesv2/glesv2.c
+@@ -680,14 +680,6 @@ void glGetShaderSource (GLuint shader, GLsizei bufsize, GLsizei* length, GLchar*
+ 
+ const GLubyte* glGetString (GLenum name)
+ {
+-	// Return 2.0 even though drivers might actually support 3.0 or higher,
+-	// because libhybris does not provide any 3.0+ symbols.
+-	if (name == GL_VERSION) {
+-		static GLubyte glGetString_versionString[64];
+-		snprintf((char *)glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
+-		return glGetString_versionString;
+-	}
+-
+ 	return (*_glGetString)(name);
+ }
+ 
+-- 
+2.19.1
+
