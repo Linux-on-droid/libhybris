@@ -7,7 +7,7 @@ Build-Depends: android-headers (>= 4.4.2),
                libwayland-dev,
                pkg-config,
                quilt
-Standards-Version: 4.1.5
+Standards-Version: 4.2.1
 Section: libs
 Vcs-Git: https://gitlab.com/debian-pm/libhybris.git
 Vcs-Browser: https://gitlab.com/debian-pm/libhybris
@@ -31,8 +31,6 @@ Description: Development headers files for libandroid-properties
 Package: libmedia1
 Architecture: amd64 arm64 armhf i386
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
-Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
 Description: Library to provide access to the Android Media HAL
  Contains a library that provides access to the Android Media HAL,
  which abstract the access to the Android libstagefright based
@@ -47,8 +45,6 @@ Architecture: amd64 arm64 armhf i386
 Depends: android-headers (>= 4.4.2),
          libmedia1 (= ${binary:Version}),
          ${misc:Depends}
-Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
-Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
 Description: Development files for libmedia
  Contains the development files for the Android Media HAL, which
  abstract the access to the Android libstagefright based decoders.
@@ -59,8 +55,6 @@ Description: Development files for libmedia
 Package: libhardware2
 Architecture: amd64 arm64 armhf i386
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
-Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Description: Library to provide access to the Android libhardware HAL
  Contains a library that provides access to the Android libhardware HAL,
  which can be used to access a wide range of other HALs, such as audio,
@@ -75,8 +69,6 @@ Architecture: amd64 arm64 armhf i386
 Depends: android-headers (>= 4.4.2),
          libhardware2 (= ${binary:Version}),
          ${misc:Depends}
-Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
-Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Description: Development files for libhardware
  Contains the development files for the Android libhardware HAL, which can
  be used to access a wide range of other HALs, such as audio, power,
@@ -88,8 +80,6 @@ Description: Development files for libhardware
 Package: libhybris-common1
 Architecture: amd64 arm64 armhf i386
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
-Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Description: Common library that contains the Android linker and custom hooks
  Contains a common library that contains the Android linker, used to
  dynamically load and use symbols from Android based libraries.
@@ -101,8 +91,6 @@ Package: libhybris-common-dev
 Section: libdevel
 Architecture: amd64 arm64 armhf i386
 Depends: libhybris-common1 (= ${binary:Version}), ${misc:Depends}
-Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
-Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Description: Development files for libhybris-common
  Contains the development files for the common library that contains the
  Android linker, used to dynamically load and use symbols from Android
