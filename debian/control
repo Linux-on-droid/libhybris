@@ -9,8 +9,8 @@ Build-Depends: android-headers (>= 4.4.2),
                quilt
 Standards-Version: 4.2.1
 Section: libs
-Vcs-Git: https://gitlab.com/debian-pm/libhybris.git
-Vcs-Browser: https://gitlab.com/debian-pm/libhybris
+Vcs-Git: https://gitlab.com/debian-pm/halium/libhybris.git
+Vcs-Browser: https://gitlab.com/debian-pm/halium/libhybris
 
 Package: libandroid-properties1
 Architecture: amd64 arm64 armhf i386
