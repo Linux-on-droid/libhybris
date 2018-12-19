@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20181125-3) UNRELEASED; urgency=medium
+
+  * Rebuild
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Wed, 19 Dec 2018 09:11:33 +0100
+
 libhybris (0.1.0+git20181125-2) UNRELEASED; urgency=medium
 
   * Rebuild for glibc 2.28
