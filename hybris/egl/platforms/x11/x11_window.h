@@ -119,7 +119,8 @@ public:
 
 class X11NativeWindow : public BaseNativeWindow {
 public:
-    X11NativeWindow(Display* xl_display, Window xl_window, alloc_device_t* alloc, gralloc_module_t* gralloc);
+    X11NativeWindow(Display* xl_display, Window xl_window, alloc_device_t* alloc,
+                                  gralloc_module_t* gralloc, bool drihybris);
     ~X11NativeWindow();
 
     void lock();
@@ -161,6 +162,7 @@ private:
 
     void copyToX11(X11NativeWindowBuffer *wnb);
     void tryEnableDRIHybris();
+    void registerForPresentEvents();
     void handlePresentEvent(xcb_present_generic_event_t *ge);
 
     std::list<X11NativeWindowBuffer *> m_bufList;

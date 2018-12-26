@@ -53,10 +53,13 @@ extern "C" {
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include "xcb_drihybris.h"
 
 static gralloc_module_t *gralloc = 0;
 static alloc_device_t *alloc = 0;
-
+static Display *x11_display = NULL;
+static xcb_connection_t *xcb_connection = NULL;
+static bool have_drihybris = false;
 
 static const char *  (*_eglQueryString)(EGLDisplay dpy, EGLint name) = NULL;
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
@@ -110,6 +113,19 @@ extern "C" _EGLDisplay *x11ws_GetDisplay(EGLNativeDisplayType display)
 	X11Display *xdpy = new X11Display;
 	xdpy->xl_display = (Display *)display;
 
+	if (!x11_display && xdpy->xl_display) {
+		x11_display = xdpy->xl_display;
+
+		// Check if we have drihybris support
+		xcb_connection = XGetXCBConnection(x11_display);
+		const xcb_query_extension_reply_t *extension;
+
+		xcb_prefetch_extension_data (xcb_connection, &xcb_drihybris_id);
+		extension = xcb_get_extension_data(xcb_connection, &xcb_drihybris_id);
+		if (extension && extension->present)
+			have_drihybris = true;
+	}
+
 	return &xdpy->base;
 }
 
@@ -133,7 +149,8 @@ extern "C" EGLNativeWindowType x11ws_CreateWindow(EGLNativeWindowType win, _EGLD
 		abort();
 	}
 
-	X11NativeWindow *window = new X11NativeWindow(xdpy->xl_display, xlib_window, alloc, gralloc);
+	X11NativeWindow *window = new X11NativeWindow(xdpy->xl_display, xlib_window,
+												alloc, gralloc, have_drihybris);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
@@ -194,29 +211,29 @@ extern "C" void x11ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, E
 
 extern "C" EGLBoolean x11ws_eglGetConfigAttrib(struct _EGLDisplay *display, EGLConfig config, EGLint attribute, EGLint *value)
 {
-    TRACE("attribute:%i", attribute);
-    if (attribute == EGL_NATIVE_VISUAL_ID)
-    {
-        X11Display *xdpy = (X11Display *)display;
-        XVisualInfo visinfo_template;
-        XVisualInfo *visinfo = NULL;
-        int visinfos_count = 0;
+	TRACE("attribute:%i", attribute);
+	if (attribute == EGL_NATIVE_VISUAL_ID)
+	{
+		X11Display *xdpy = (X11Display *)display;
+		XVisualInfo visinfo_template;
+		XVisualInfo *visinfo = NULL;
+		int visinfos_count = 0;
 
-        visinfo_template.depth = 32;
-        visinfo = XGetVisualInfo (xdpy->xl_display,
-                            VisualDepthMask,
-                            &visinfo_template,
-                            &visinfos_count);
+		visinfo_template.depth = 32;
+		visinfo = XGetVisualInfo (xdpy->xl_display,
+							VisualDepthMask,
+							&visinfo_template,
+							&visinfos_count);
 
-        if (visinfos_count)
-        {
-            TRACE("visinfo.visualid:%i", attribute);
-            *value = visinfo->visualid;
-            return EGL_TRUE;
-        }
+		if (visinfos_count)
+		{
+			TRACE("visinfo.visualid:%i", attribute);
+			*value = visinfo->visualid;
+			return EGL_TRUE;
+		}
 
-    }
-    return EGL_FALSE;
+	}
+	return EGL_FALSE;
 }
 
 struct ws_module ws_module_info = {
@@ -231,5 +248,5 @@ struct ws_module ws_module_info = {
 	x11ws_prepareSwap,
 	x11ws_finishSwap,
 	x11ws_setSwapInterval,
-    x11ws_eglGetConfigAttrib
+	x11ws_eglGetConfigAttrib
 };

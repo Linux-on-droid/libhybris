@@ -59,7 +59,8 @@ void X11NativeWindow::unlock()
     pthread_mutex_unlock(&this->mutex);
 }
 
-X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_device_t* alloc, gralloc_module_t* gralloc)
+X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_device_t* alloc,
+                                 gralloc_module_t* gralloc, bool drihybris)
 {
     int wayland_ok;
 
@@ -69,8 +70,8 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
     this->m_connection = XGetXCBConnection(xl_display);
     this->m_image = 0;
     this->m_useShm = true;
-    this->m_format = HAL_PIXEL_FORMAT_BGRA_8888;
-    //this->m_format = HAL_PIXEL_FORMAT_RGBA_8888;
+    this->m_format = drihybris ? HAL_PIXEL_FORMAT_RGBA_8888 : HAL_PIXEL_FORMAT_BGRA_8888;
+    this->m_haveDRIHybris = drihybris;
 
     const_cast<int&>(ANativeWindow::minSwapInterval) = 0;
     const_cast<int&>(ANativeWindow::maxSwapInterval) = 1;
@@ -127,8 +128,7 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
     xcb_create_gc(m_connection, m_xcb_gc, m_window, 0, 0);
 
     m_specialEvent = 0;
-    m_haveDRIHybris = false;
-    tryEnableDRIHybris();
+    registerForPresentEvents();
 
     m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_SW_READ_OFTEN;
     pthread_mutex_init(&mutex, NULL);
@@ -619,7 +619,7 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
         {
             m_image = XShmCreateImage(m_display,
                         CopyFromParent,
-                        32,
+                        m_depth,
                         ZPixmap, 0, &m_shminfo, wnb->stride, wnb->height);
 
             m_shminfo.shmid = shmget(IPC_PRIVATE,
@@ -637,7 +637,7 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
         {
             m_image = XCreateImage(m_display,
                                 CopyFromParent,
-                                32,
+                                m_depth,
                                 ZPixmap, 0, (char *)vaddr, wnb->stride, wnb->height, 32, 0);
         }
     }
@@ -670,19 +670,13 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
     unlock();
 }
 
-void X11NativeWindow::tryEnableDRIHybris()
+void X11NativeWindow::registerForPresentEvents()
 {
     const xcb_query_extension_reply_t *extension;
     xcb_void_cookie_t cookie;
     xcb_generic_error_t *error;
 
-    xcb_prefetch_extension_data (m_connection, &xcb_drihybris_id);
-    xcb_prefetch_extension_data (m_connection, &xcb_present_id);
-
-    extension = xcb_get_extension_data(m_connection, &xcb_drihybris_id);
-    if (!(extension && extension->present))
-        return;
-
+    xcb_prefetch_extension_data(m_connection, &xcb_present_id);
     extension = xcb_get_extension_data(m_connection, &xcb_present_id);
     if (!(extension && extension->present))
         return;
@@ -700,10 +694,7 @@ void X11NativeWindow::tryEnableDRIHybris()
     if (error) {
         return;
     }
-
-    m_haveDRIHybris = true;
-    // HYBRIS_PIXEL_FORMAT_RGBA_8888 is used in glamor for buffer import
-    m_format = HAL_PIXEL_FORMAT_RGBA_8888;
+    TRACE("registered for present events\n");
 }
 
 void X11NativeWindow::handlePresentEvent(xcb_present_generic_event_t *ge)
@@ -711,7 +702,7 @@ void X11NativeWindow::handlePresentEvent(xcb_present_generic_event_t *ge)
     switch (ge->evtype) {
     case XCB_PRESENT_CONFIGURE_NOTIFY: {
         xcb_present_configure_notify_event_t *ce = (xcb_present_configure_notify_event_t *) ge;
-        printf("XCB_PRESENT_CONFIGURE_NOTIFY: %dx%d\n", ce->width, ce->height);
+        TRACE("XCB_PRESENT_CONFIGURE_NOTIFY: %dx%d\n", ce->width, ce->height);
         resize(ce->width, ce->height);
         break;
     }
