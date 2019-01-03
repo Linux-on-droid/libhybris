@@ -1,16 +1,16 @@
-libhybris (0.1.0+git20181125-3) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20190104-1) UNRELEASED; urgency=medium
 
-  * Rebuild
+  * New upstream snapshot
 
- -- Jonah Brüchert <jbb@kaidan.im>  Wed, 19 Dec 2018 09:11:33 +0100
+ -- Jonah Brüchert <jbb.mail@gmx.de>  Fri, 04 Jan 2019 00:15:11 +0100
 
-libhybris (0.1.0+git20181125-2) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20181125-2) unstable; urgency=medium
 
   * Rebuild for glibc 2.28
 
  -- Jonah Brüchert <jbb@kaidan.im>  Sun, 16 Dec 2018 11:07:05 +0100
 
-libhybris (0.1.0+git20181125-1) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20181125-1) unstable; urgency=medium
 
   * New snapshot
   * Remove ubuntu vivid compatibility extras
