@@ -58,6 +58,8 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 
 	if (buf->format == HAL_PIXEL_FORMAT_RGBA_8888 || buf->format == HAL_PIXEL_FORMAT_BGRA_8888)
 		bytes_pp = 4;
+    else if (buf->format == HAL_PIXEL_FORMAT_RGB_888)
+        bytes_pp = 3;
 	else if (buf->format == HAL_PIXEL_FORMAT_RGB_565)
 		bytes_pp = 2;
 
