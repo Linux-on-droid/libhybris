@@ -1,5 +1,5 @@
 Source: libhybris
-Priority: extra
+Priority: optional
 Maintainer: Halium Developers <admin@halium.org>
 Build-Depends: android-headers (>= 4.4.2),
                debhelper (>= 11),
@@ -106,7 +106,7 @@ Depends: libandroid-properties1 (= ${binary:Version}),
          libmedia1,
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Allows to run bionic-based HW adaptations in glibc systems - libs
+Description: Allows one to run bionic-based HW adaptations in glibc systems - libs
  Hybris is a solution that allows the use of bionic-based HW adaptations in
  glibc systems.
 
@@ -142,7 +142,7 @@ Package: libhybris-test
 Section: devel
 Architecture: amd64 arm64 armhf i386
 Depends: libhybris (= ${binary:Version}), ${misc:Depends}, ${shlibs:Depends}
-Description: Allows to run bionic-based HW adaptations in glibc systems - tests
+Description: Allows one to run bionic-based HW adaptations in glibc systems - tests
  Contains the test applications used to validate libhybris (needs Android
  libraries or container).
  .
