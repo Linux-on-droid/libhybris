@@ -1,8 +1,14 @@
-libhybris (0.1.0+git20190111-2) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20190225-1) UNRELEASED; urgency=medium
+
+  * New snapshot
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Mon, 25 Feb 2019 19:36:48 +0100
+
+libhybris (0.1.0+git20190111-2) unstable; urgency=medium
 
   * Apply patch Add HYBRIS_LD_SHIM_LIBS variable parsing
 
- -- Jonah Brüchert <jbb@kaidan.im>  Sat, 09 Feb 2019 10:50:42 +0100
+ -- Jonah Brüchert <jbb@kaidan.im>  Sat, 09 Feb 2019 10:50:58 +0100
 
 libhybris (0.1.0+git20190111-1) unstable; urgency=medium
 
