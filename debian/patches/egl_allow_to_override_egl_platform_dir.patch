@@ -8,11 +8,9 @@ This is useful in bundled environment.
  hybris/egl/ws.c | 7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/hybris/egl/ws.c b/hybris/egl/ws.c
-index b10c7041..cd5270ba 100644
 --- a/hybris/egl/ws.c
 +++ b/hybris/egl/ws.c
-@@ -40,7 +40,12 @@ static void _init_ws()
+@@ -40,7 +40,12 @@
  		if (egl_platform == NULL)
  			egl_platform = DEFAULT_EGL_PLATFORM;
  
