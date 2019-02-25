@@ -14,3 +14,5 @@ usr/lib/*/libEGL.so.*		#PKGLIBDIR#
 usr/lib/*/libGLESv2.so.*	#PKGLIBDIR#
 usr/lib/*/libGLESv1_CM.so.*	#PKGLIBDIR#
 usr/lib/*/libOpenCL.so.*	#PKGLIBDIR#
+usr/lib/*/libhwc2.so.*		#PKGLIBDIR#
+usr/lib/*/libgralloc.so.*	#PKGLIBDIR#
