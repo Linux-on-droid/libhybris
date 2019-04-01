@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20190401-1) UNRELEASED; urgency=medium
+
+  * New snapshot
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Mon, 01 Apr 2019 18:48:50 +0200
+
 libhybris (0.1.0+git20190326-1) unstable; urgency=medium
 
   * New snapshot
