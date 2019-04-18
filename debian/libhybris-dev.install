@@ -3,6 +3,7 @@ usr/include/hybris/common
 usr/include/hybris/dlfcn
 usr/include/hybris/eglplatformcommon
 usr/include/hybris/eglplatformcommon
+usr/include/hybris/hwc2
 usr/include/hybris/hwcomposerwindow
 usr/include/hybris/input
 usr/include/hybris/surface_flinger
@@ -20,6 +21,8 @@ usr/lib/*/libwifi.so
 usr/lib/*/pkgconfig/hwcomposer-egl.pc
 usr/lib/*/pkgconfig/hybris-egl-platform.pc
 usr/lib/*/pkgconfig/libcamera.pc
+usr/lib/*/pkgconfig/libgralloc.pc
+usr/lib/*/pkgconfig/libhwc2.pc
 usr/lib/*/pkgconfig/libis.pc
 usr/lib/*/pkgconfig/libnfc_nxp.pc
 usr/lib/*/pkgconfig/libsf.pc
