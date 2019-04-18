@@ -1,6 +1,8 @@
 usr/lib/*/libhybris-eglplatformcommon.so.*
 usr/lib/*/libhybris-hwcomposerwindow.so.*
 usr/lib/*/libsync.so.*
+usr/lib/*/libhwc2.so.*
+usr/lib/*/libgralloc.so.*
 usr/lib/*/libui.so.*
 usr/lib/*/libsf.so.*
 usr/lib/*/libis.so.*
@@ -13,5 +15,3 @@ usr/lib/*/libEGL.so.*		#PKGLIBDIR#
 usr/lib/*/libGLESv2.so.*	#PKGLIBDIR#
 usr/lib/*/libGLESv1_CM.so.*	#PKGLIBDIR#
 usr/lib/*/libOpenCL.so.*	#PKGLIBDIR#
-usr/lib/*/libhwc2.so.*		#PKGLIBDIR#
-usr/lib/*/libgralloc.so.*	#PKGLIBDIR#

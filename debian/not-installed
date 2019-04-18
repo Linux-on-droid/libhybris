@@ -16,5 +16,3 @@
 /usr/lib/*/libGLESv2.so*
 /usr/lib/*/libGLESv1_CM.so*
 /usr/lib/*/libOpenCL.so*
-/usr/lib/*/libhwc2.so*
-/usr/lib/*/libgralloc.so*

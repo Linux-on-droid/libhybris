@@ -9,6 +9,8 @@ usr/include/hybris/input
 usr/include/hybris/surface_flinger
 usr/include/hybris/ui
 usr/lib/*/libcamera.so
+usr/lib/*/libgralloc.so
+usr/lib/*/libhwc2.so
 usr/lib/*/libhybris-eglplatformcommon.so
 usr/lib/*/libhybris-hwcomposerwindow.so
 usr/lib/*/libis.so
