@@ -65,6 +65,10 @@ camerainclude_HEADERS = \
 	hybris/camera/camera_compatibility_layer_configuration_translator.h \
 	hybris/camera/camera_compatibility_layer.h
 
+grallocincludedir = $(includedir)/hybris/gralloc
+grallocinclude_HEADERS = \
+	hybris/gralloc/gralloc.h
+
 propertiesincludedir = $(includedir)/hybris/properties
 propertiesinclude_HEADERS = \
 	hybris/properties/properties.h
