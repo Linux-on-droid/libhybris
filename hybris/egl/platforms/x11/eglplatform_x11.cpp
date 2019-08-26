@@ -48,6 +48,7 @@ extern "C" {
 #include <wayland-egl.h>
 }
 
+#include <hybris/gralloc/gralloc.h>
 #include "x11_window.h"
 #include "logging.h"
 
@@ -55,8 +56,6 @@ extern "C" {
 #include <X11/Xutil.h>
 #include "xcb_drihybris.h"
 
-static gralloc_module_t *gralloc = 0;
-static alloc_device_t *alloc = 0;
 static Display *x11_display = NULL;
 static xcb_connection_t *xcb_connection = NULL;
 static bool have_drihybris = false;
@@ -74,11 +73,8 @@ struct X11Display {
 
 extern "C" void x11ws_init_module(struct ws_egl_interface *egl_iface)
 {
-	int err;
-	hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-	TRACE("++ %lu x11: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
-	eglplatformcommon_init(egl_iface, gralloc, alloc);
+	hybris_gralloc_initialize(0);
+	eglplatformcommon_init(egl_iface);
 }
 
 static void _init_egl_funcs(EGLDisplay display)
@@ -150,7 +146,7 @@ extern "C" EGLNativeWindowType x11ws_CreateWindow(EGLNativeWindowType win, _EGLD
 	}
 
 	X11NativeWindow *window = new X11NativeWindow(xdpy->xl_display, xlib_window,
-												alloc, gralloc, have_drihybris);
+                                                  have_drihybris);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }

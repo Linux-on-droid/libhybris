@@ -28,7 +28,8 @@
 #define X11_WINDOW_H
 #include "nativewindowbase.h"
 #include <linux/fb.h>
-#include <hardware/gralloc.h>
+#include <hybris/gralloc/gralloc.h>
+
 extern "C" {
 #include <X11/Xlib-xcb.h>
 #include <xcb/present.h>
@@ -36,6 +37,7 @@ extern "C" {
 #include <X11/extensions/XShm.h>
 #include <pthread.h>
 }
+
 #include <list>
 #include <deque>
 
@@ -71,16 +73,13 @@ class ClientX11Buffer : public X11NativeWindowBuffer
 {
 friend class X11NativeWindow;
 protected:
-    ClientX11Buffer()
-        : m_alloc(0)
-    {}
+    ClientX11Buffer() {}
 
-    ClientX11Buffer(alloc_device_t* alloc_device,
-                            unsigned int width,
-                            unsigned int height,
-                            unsigned int format,
-                            unsigned int usage,
-                            unsigned int windowDepth)
+    ClientX11Buffer(unsigned int width,
+                    unsigned int height,
+                    unsigned int format,
+                    unsigned int usage,
+                    unsigned int windowDepth)
     {
         // Base members
         ANativeWindowBuffer::width = width;
@@ -90,11 +89,10 @@ protected:
 
         this->busy = 0;
         this->other = NULL;
-        this->m_alloc = alloc_device;
-        int alloc_ok = this->m_alloc->alloc(this->m_alloc,
-                this->width ? this->width : 1, this->height ? this->height : 1,
+        int alloc_ok = hybris_gralloc_allocate(this->width ? this->width : 1,
+                this->height ? this->height : 1,
                 this->format, this->usage,
-                &this->handle, &this->stride);
+                &this->handle, (uint32_t*)&this->stride);
         assert(alloc_ok == 0);
         this->youngest = 0;
         this->common.incRef(&this->common);
@@ -105,13 +103,11 @@ protected:
 
     ~ClientX11Buffer()
     {
-        if (this->m_alloc)
-            m_alloc->free(m_alloc, this->handle);
+        hybris_gralloc_release(this->handle, 1);
     }
 
 protected:
     void* vaddr;
-    alloc_device_t* m_alloc;
 
 public:
 
@@ -119,8 +115,7 @@ public:
 
 class X11NativeWindow : public BaseNativeWindow {
 public:
-    X11NativeWindow(Display* xl_display, Window xl_window, alloc_device_t* alloc,
-                                  gralloc_module_t* gralloc, bool drihybris);
+    X11NativeWindow(Display* xl_display, Window xl_window, bool drihybris);
     ~X11NativeWindow();
 
     void lock();
@@ -194,14 +189,12 @@ private:
     unsigned int m_defaultHeight;
     unsigned int m_usage;
 
-    alloc_device_t* m_alloc;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int m_queueReads;
     int m_freeBufs;
     EGLint *m_damage_rects, m_damage_n_rects;
     int m_swap_interval;
-    gralloc_module_t *m_gralloc;
 };
 
 #endif

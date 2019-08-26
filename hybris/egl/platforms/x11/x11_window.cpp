@@ -59,8 +59,8 @@ void X11NativeWindow::unlock()
     pthread_mutex_unlock(&this->mutex);
 }
 
-X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_device_t* alloc,
-                                 gralloc_module_t* gralloc, bool drihybris)
+X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window,
+                                 bool drihybris)
 {
     int wayland_ok;
 
@@ -77,9 +77,6 @@ X11NativeWindow::X11NativeWindow(Display* xl_display, Window xl_window, alloc_de
     const_cast<int&>(ANativeWindow::maxSwapInterval) = 1;
     // This is the default as per the EGL documentation
     this->m_swap_interval = 1;
-
-    this->m_alloc = alloc;
-    m_gralloc = gralloc;
     
     TRACE("getting X11 window information");
 
@@ -536,7 +533,7 @@ X11NativeWindowBuffer *X11NativeWindow::addBuffer() {
 
     X11NativeWindowBuffer *wnb;
 
-    wnb = new ClientX11Buffer(m_alloc, m_width, m_height, m_format, m_usage, m_depth);
+    wnb = new ClientX11Buffer(m_width, m_height, m_format, m_usage, m_depth);
     m_bufList.push_back(wnb);
     ++m_freeBufs;
 
@@ -608,7 +605,7 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
     void *vaddr;
     std::list<X11NativeWindowBuffer *>::iterator it;
 
-    ret = m_gralloc->lock(m_gralloc, wnb->handle, wnb->usage, 0, 0, wnb->width, wnb->height, &vaddr);
+    ret = hybris_gralloc_lock(wnb->handle, wnb->usage, 0, 0, wnb->width, wnb->height, &vaddr);
     TRACE("wnb:%p gralloc lock returns %i", wnb, ret);
     TRACE("wnb:%p lock to vaddr %p", wnb, vaddr);
     TRACE("wnb:%p width=%d stride=%d height=%d format=%d", wnb, wnb->width, wnb->stride, wnb->height, wnb->format);
@@ -646,14 +643,14 @@ void X11NativeWindow::copyToX11(X11NativeWindowBuffer *wnb) {
     if (m_useShm)
     {
         memcpy(m_image->data, vaddr, m_image->bytes_per_line * m_image->height);
-        m_gralloc->unlock(m_gralloc, wnb->handle);
+        hybris_gralloc_unlock(wnb->handle);
         XShmPutImage(m_display, m_window, m_gc, m_image, 0, 0, 0, 0, m_width, m_height, 0);
     }
     else
     {
         m_image->data = (char *)vaddr;
         XPutImage(m_display, m_window, m_gc, m_image, 0, 0, 0, 0, m_width, m_height);
-        m_gralloc->unlock(m_gralloc, wnb->handle);
+        hybris_gralloc_unlock(wnb->handle);
     }
 
     lock();
