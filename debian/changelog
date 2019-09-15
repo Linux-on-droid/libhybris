@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20190401-2) unstable; urgency=medium
+
+  * No-change rebuild against glibc 2.29-1
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Sun, 15 Sep 2019 19:39:22 +0200
+
 libhybris (0.1.0+git20190401-1) unstable; urgency=medium
 
   * New snapshot
