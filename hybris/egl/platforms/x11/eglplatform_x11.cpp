@@ -162,8 +162,49 @@ extern "C" __eglMustCastToProperFunctionPointerType x11ws_eglGetProcAddress(cons
 	return eglplatformcommon_eglGetProcAddress(procname);
 }
 
+extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateRemoteBuffer(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
+																	int num_ints, int *ints, int num_fds, int *fds, EGLClientBuffer *buffer);
+
 extern "C" void x11ws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list)
 {
+	if (*target == EGL_NATIVE_PIXMAP_KHR && have_drihybris)
+	{
+		TRACE("target: EGL_NATIVE_PIXMAP_KHR");
+		xcb_drihybris_buffer_from_pixmap_cookie_t bp_cookie;
+		xcb_drihybris_buffer_from_pixmap_reply_t  *bp_reply;
+		xcb_drawable_t drawable = (xcb_drawable_t) (uintptr_t) *buffer;
+		xcb_generic_error_t *error;
+
+		bp_cookie = xcb_drihybris_buffer_from_pixmap(xcb_connection,
+													drawable);
+
+		bp_reply = xcb_drihybris_buffer_from_pixmap_reply(xcb_connection,
+														bp_cookie, &error);
+
+		if (bp_reply) {
+			EGLClientBuffer buf;
+
+			eglplatformcommon_eglHybrisCreateRemoteBuffer(
+				bp_reply->width, bp_reply->height, GRALLOC_USAGE_HW_TEXTURE,
+				HAL_PIXEL_FORMAT_RGBA_8888, bp_reply->stride,
+				bp_reply->num_ints,
+				(int*)xcb_drihybris_buffer_from_pixmap_ints(bp_reply),
+				bp_reply->num_fds, xcb_drihybris_buffer_from_pixmap_fds(bp_reply),
+				&buf);
+
+			TRACE("created remote EGL buffer, set target to EGL_NATIVE_BUFFER_ANDROID");
+
+			*buffer = (EGLClientBuffer) (ANativeWindowBuffer *) buf;
+			*target = EGL_NATIVE_BUFFER_ANDROID;
+			*ctx = EGL_NO_CONTEXT;
+			*attrib_list = NULL;
+		} else {
+			HYBRIS_ERROR("xcb_drihybris_buffer_from_pixmap call failed");
+			if (error)
+				HYBRIS_ERROR("xcb_drihybris_buffer_from_pixmap error code: %d\n",
+							error->error_code);
+		}
+	}
 	eglplatformcommon_passthroughImageKHR(ctx, target, buffer, attrib_list);
 }
 
@@ -174,7 +215,7 @@ extern "C" const char *x11ws_eglQueryString(EGLDisplay dpy, EGLint name, const c
 	{
 		static char eglextensionsbuf[1024];
 		snprintf(eglextensionsbuf, 1022, "%s %s", ret,
-			"EGL_EXT_swap_buffers_with_damage EGL_WL_create_x11_buffer_from_image"
+			"EGL_EXT_swap_buffers_with_damage EGL_KHR_image_pixmap"
 		);
 		ret = eglextensionsbuf;
 	}
