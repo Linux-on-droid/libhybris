@@ -2,12 +2,12 @@ Source: libhybris
 Priority: optional
 Maintainer: Halium Developers <admin@halium.org>
 Build-Depends: android-headers (>= 4.4.2),
-               debhelper (>= 11),
+               debhelper (>= 12),
                libgles2-mesa-dev,
                libwayland-dev,
                pkg-config,
                quilt
-Standards-Version: 4.2.1
+Standards-Version: 4.4.1
 Section: libs
 Vcs-Git: https://gitlab.com/debian-pm/halium/libhybris.git
 Vcs-Browser: https://gitlab.com/debian-pm/halium/libhybris
