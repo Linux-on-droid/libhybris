@@ -2,6 +2,10 @@ LOCAL_PATH:= $(call my-dir)
 
 HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/libmediaplayerservice/Android.mk |grep LOCAL_32_BIT_ONLY |grep -o "true\|false")
 
+ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),)
+    HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/libmediaplayerservice/Android.bp | grep compile_multilib | grep -o "32" | sed "s/32/true/")
+endif
+
 ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
 HYBRIS_MEDIA_MULTILIB := 32
 endif
