@@ -1,8 +1,8 @@
-libhybris (0.1.0+git20200421-1) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20200421-1) unstable; urgency=medium
 
   * New snapshot
 
- -- Jonah Brüchert <jbb@kaidan.im>  Tue, 21 Apr 2020 18:48:33 +0200
+ -- Jonah Brüchert <jbb@kaidan.im>  Tue, 21 Apr 2020 18:56:05 +0200
 
 libhybris (0.1.0+git20190401-3) unstable; urgency=medium
 
