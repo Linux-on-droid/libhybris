@@ -1,2 +1,1 @@
-egl_allow_to_override_egl_platform_dir.patch
 env_hybris_ld_shim_libs.patch
