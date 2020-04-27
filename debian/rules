@@ -40,7 +40,8 @@ DEFAULT_CONFIGURATION = \
 	--enable-wayland \
 	--with-android-headers=$(ANDROID_HEADERS_PATH) \
 	--enable-property-cache \
-	--enable-experimental
+	--enable-experimental \
+	--with-default-egl-platform=wayland
 ARCH_CONFIGURATION =
 
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
