@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20200424-5) unstable; urgency=medium
+
+  * Rebuild
+
+ -- Jonah Brüchert <jbb@kaidan.im>  Tue, 21 Jul 2020 12:50:53 +0200
+
 libhybris (0.1.0+git20200424-4) unstable; urgency=medium
 
   * Rebuild
