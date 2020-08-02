@@ -1,0 +1,5 @@
+include:
+  - 'https://gitlab.com/debian-pm/tools/build/raw/master/docker/gitlab-ci-base.yml'
+  - 'https://gitlab.com/debian-pm/tools/build/raw/master/docker/gitlab-ci-caf.yml'
+
+image: jbbgameich/build
