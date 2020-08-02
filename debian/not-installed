@@ -12,7 +12,6 @@
 /usr/include/VG/
 
 # share libraries installed to usr/lib/*/libhybris-egl/
-/usr/lib/*/libwayland-egl.so*
 /usr/lib/*/libEGL.so*
 /usr/lib/*/libGLESv2.so*
 /usr/lib/*/libGLESv1_CM.so*
