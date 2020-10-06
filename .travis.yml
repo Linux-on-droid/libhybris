@@ -1,9 +1,6 @@
-language: cpp
-os: linux
-sudo: required
+env:
+  global:
+    BUILD_ON="amd64 arm64 armhf"
 
-services:
-  - docker
-
-script:
-  - utils/travis-build.sh
+import:
+  source: hybris-mobian-releng/build-snippets:debian-package.yml@master

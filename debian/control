@@ -1,7 +1,7 @@
 Source: libhybris
 Priority: optional
 Maintainer: Halium Developers <admin@halium.org>
-Build-Depends: android-headers (>= 4.4.2),
+Build-Depends: android-headers,
                debhelper (>= 12),
                libgles2-mesa-dev,
                libwayland-dev,
