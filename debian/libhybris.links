@@ -1,0 +1,2 @@
+#! /usr/bin/dh-exec
+usr/lib/${DEB_HOST_MULTIARCH}/libhybris-common.so.1 usr/lib/${DEB_HOST_MULTIARCH}/libhybris_ics.so

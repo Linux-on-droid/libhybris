@@ -3,12 +3,14 @@ Priority: optional
 Maintainer: Halium Developers <admin@halium.org>
 Build-Depends: android-headers,
                debhelper (>= 12),
-               libgles2-mesa-dev,
                libwayland-dev,
                libx11-xcb-dev,
                libxcb-present-dev,
                libxext-dev,
+               dh-exec,
                pkg-config,
+               libglvnd-dev,
+               python3,
                quilt
 Standards-Version: 4.4.1
 Section: libs

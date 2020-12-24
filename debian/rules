@@ -9,6 +9,8 @@ include /usr/share/dpkg/architecture.mk
 # Package names
 PKG_driver      := libhybris
 
+export DEB_HOST_MULTIARCH=$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
 # Strong needs at least gcc 4.9
 export DEB_BUILD_MAINT_OPTIONS=hardening=-stackprotectorstrong
 
@@ -40,7 +42,8 @@ DEFAULT_CONFIGURATION = \
 	--enable-wayland \
 	--with-android-headers=$(ANDROID_HEADERS_PATH) \
 	--enable-property-cache \
-	--enable-experimental
+	--enable-experimental \
+	--enable-glvnd
 ARCH_CONFIGURATION =
 
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
@@ -80,37 +83,7 @@ override_dh_auto_configure:
 		$(ARCH_CONFIGURATION)
 
 override_dh_install:
-	# Fill in important variables
-	for i in $(PKG_driver).dirs \
-			$(PKG_driver).install \
-			$(PKG_driver).links \
-			$(PKG_driver).postinst \
-			$(PKG_driver).postrm \
-			$(PKG_driver).prerm; do \
-		sed -e "s|#LIBDIR#|$(libdir)|g" \
-			-e "s|#BINDIR#|$(bindir)|g" \
-			-e "s|#SYSCONFDIR#|$(sysconfdir)|g" \
-			-e "s|#LDSOCONF#|$(ld_so_conf_path)|g" \
-			-e "s|#ALTLDSOCONF#|$(alt_ld_so_conf_path)|g" \
-			-e "s|#ALTPRIORITY#|$(alt_priority)|g" \
-			-e "s|#DATADIR#|$(datadir)|g" \
-			-e "s|#PKGCONFIGDIR#|$(PKG_configdir)|g" \
-			-e "s|#PKGLIBDIR#|$(PKG_libdir)|g" \
-			-e "s|#DRIVERNAME#|$(PKG_driver)|g" \
-			-e "s|#DRIVERSRCNAME#|$(DEB_SOURCE)|g" \
-			-e "s|#VERSION#|$(DEB_VERSION)|g" \
-			-e "s|#INCLUDEDIR#|$(includedir)|g" \
-			-e "s|#DEB_HOST_MULTIARCH#|$(DEB_HOST_MULTIARCH)|g" \
-			debian/$$i.in > debian/$$i; \
-	done
-
-	dh_install
-
-	# ld.so.conf
-	echo "/$(PKG_libdir)" > "$(CURDIR)/debian/$(PKG_driver)/$(ld_so_conf_path)"
-
-	# empty ld.so.conf for the fake multi-arch alternative
-	echo "" > "$(CURDIR)/debian/$(PKG_driver)/$(alt_ld_so_conf_path)"
+	dh_install -O--sourcedirectory=hybris
 
 	# Create the flatpak extension
 	mkdir -p $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
