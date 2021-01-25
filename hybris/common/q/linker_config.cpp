@@ -583,11 +583,17 @@ bool Config::read_binary_config(const char* ld_config_file_path,
 }
 
 std::string Config::get_vndk_version_string(const char delimiter) {
-  /*std::string version = android::base::GetProperty("ro.vndk.version", "");
+  /*std::string version = android::base::GetProperty("ro.vndk.version", "");*/
+  std::string version = "";
+
+  const char* version_env = getenv("HYBRIS_VNDK_VERSION");
+  if (version_env)
+    version = version_env;
+
   if (version != "" && version != "current") {
     //add the delimiter char in front of the string and return it.
     return version.insert(0, 1, delimiter);
-  }*/
+  }
   return "";
 }
 
