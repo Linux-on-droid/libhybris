@@ -4,7 +4,9 @@ lib_LTLIBRARIES = \
 SUBDIRS =
 
 if !WANT_ARCH_ARM64
+if !WANT_ARCH_X86_64
 SUBDIRS += jb
+endif
 endif
 
 if HAS_ANDROID_6_0_0
@@ -19,6 +21,10 @@ if HAS_ANDROID_8_0_0
 SUBDIRS += o
 endif
 
+if HAS_ANDROID_10_0_0
+SUBDIRS += q
+endif
+
 libhybris_common_la_SOURCES = \
 	hooks.c \
 	hooks_shm.c \
@@ -26,6 +32,7 @@ libhybris_common_la_SOURCES = \
 	strlcat.c \
 	logging.c \
 	sysconf.c \
+	dso_handle_counters.cpp \
 	legacy_properties/properties.c \
 	legacy_properties/cache.c
 
@@ -50,14 +57,6 @@ libhybris_common_la_CPPFLAGS = \
 
 if WANT_ADRENO_QUIRKS
 libhybris_common_la_CPPFLAGS += -DWANT_ADRENO_QUIRKS
-endif
-
-if WANT_ARM_TRACING
-# thumb mode not supported
-libhybris_common_la_CFLAGS += \
-	-marm
-libhybris_common_la_CPPFLAGS += \
-	-marm
 endif
 
 if WANT_TRACE
@@ -87,10 +86,18 @@ endif
 if HAS_ANDROID_8_0_0
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_O
 endif
+if HAS_ANDROID_10_0_0
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_Q
+endif
+
+libhybris_common_la_CXXFLAGS = \
+	-std=gnu++11
+
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
 	-pthread \
 	-lc \
 	-lstdc++ \
+	-lpthread \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

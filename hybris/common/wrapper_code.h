@@ -22,7 +22,13 @@
 extern "C" {
 #endif
 
+#ifdef __aarch64__
 void wrapper_code_generic() __attribute__((naked,noinline));
+#endif
+#ifdef __arm__
+void wrapper_code_generic() __attribute__((naked,noinline)) __attribute__((target("arm")));
+void wrapper_code_generic_thumb() __attribute__((naked,noinline)) __attribute__((target("thumb")));
+#endif
 
 #ifdef __cplusplus
 }

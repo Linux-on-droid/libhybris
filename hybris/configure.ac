@@ -61,7 +61,7 @@ AC_ARG_ENABLE(trace,
 AM_CONDITIONAL( [WANT_TRACE], [test x"$trace" = x"yes"])
 
 AC_ARG_ENABLE(arm_tracing,
-  [  --enable-arm-tracing            Enable ARM (32-bit only) tracing, useful for understanding what the blob is doing, currently only the mm linker is supported. (default=disabled)],
+  [  --enable-arm-tracing            Enable ARM (both 32 and 64-bit) tracing, useful for understanding what the blob is doing, currently only the mm linker is supported. (default=disabled)],
   [arm_tracing=$enableval],
   [arm_tracing="no"])
 AM_CONDITIONAL([WANT_ARM_TRACING], [test x"$arm_tracing" = x"yes"])
@@ -171,11 +171,6 @@ AC_ARG_WITH(android-headers,
   ],
   [
     PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
-    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
-    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [false])
-    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [false])
-    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [false])
-    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [false])
     AC_SUBST([ANDROID_HEADERS_PKGCONFIG], [android-headers])
   ]
 )
@@ -183,6 +178,19 @@ CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
 
 AC_CHECK_HEADERS(android-config.h,,AC_MSG_ERROR(required header file is missing))
 AC_CHECK_HEADERS(android-version.h,,AC_MSG_ERROR(required header file is missing))
+
+if test x$ac_with_android_headers == x""; then
+    AC_CHECK_HEADERS(libnfc-nxp/phLibNfc.h, HAS_LIBNFC_NXP_HEADERS=yes)
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test x"$HAS_LIBNFC_NXP_HEADERS" = x"yes"])
+    AC_CHECK_HEADERS(hardware_legacy/wifi.h, HAS_WIFI_LEGACY_HEADERS=yes)
+    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [test x"$HAS_WIFI_LEGACY_HEADERS" = x"yes"])
+    AC_CHECK_HEADERS(hardware/hwcomposer2.h, HAS_HWCOMPOSER2_HEADERS=yes, HAS_HWCOMPOSER2_HEADERS=no, [# include <stdbool.h>])
+    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [test x"$HAS_HWCOMPOSER2_HEADERS" = x"yes"])
+    AC_CHECK_HEADERS(hardware/gralloc1.h, HAS_GRALLOC1_HEADER=yes)
+    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [test x"$HAS_GRALLOC1_HEADER" = x"yes"])
+    AC_CHECK_HEADERS(hardware_legacy/vibrator.h, HAS_VIBRATOR_HEADER=yes)
+    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [test x"$HAS_VIBRATOR_HEADER" = x"yes"])
+fi
 
 # AC_AWK_CPP
 AC_DEFUN([AC_AWK_CPP],
@@ -234,6 +242,7 @@ AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
 AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
+AM_CONDITIONAL([HAS_ANDROID_10_0_0],[test $android_headers_major -ge 10 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_9_0_0], [test $android_headers_major -ge 9 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_8_0_0], [test $android_headers_major -ge 8 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_7_0_0], [test $android_headers_major -ge 7 -a $android_headers_minor -ge 0 ])
@@ -269,6 +278,7 @@ AC_CONFIG_FILES([
 	common/mm/Makefile
 	common/n/Makefile
 	common/o/Makefile
+	common/q/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile

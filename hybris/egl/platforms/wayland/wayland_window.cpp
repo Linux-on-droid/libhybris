@@ -26,6 +26,7 @@
 
 
 #include <android-config.h>
+#include <hardware/gralloc.h>
 #include "wayland_window.h"
 #include "wayland-egl-priv.h"
 #include <assert.h>
@@ -89,8 +90,8 @@ void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl
 void WaylandNativeWindow::resize(unsigned int width, unsigned int height)
 {
     lock();
-    this->m_defaultWidth = width;
-    this->m_defaultHeight = height;
+    this->m_defaultWidth = m_width = width;
+    this->m_defaultHeight = m_height = height;
     unlock();
 }
 
