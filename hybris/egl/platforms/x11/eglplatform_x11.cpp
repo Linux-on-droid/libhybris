@@ -48,6 +48,7 @@ extern "C" {
 #include <wayland-egl.h>
 }
 
+#include <hardware/gralloc.h>
 #include <hybris/gralloc/gralloc.h>
 #include "x11_window.h"
 #include "logging.h"

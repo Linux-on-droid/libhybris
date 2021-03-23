@@ -25,6 +25,7 @@
  ****************************************************************************************/
 
 #include <android-config.h>
+#include <hardware/gralloc.h>
 #include "x11_window.h"
 #include <assert.h>
 #include <stdlib.h>
