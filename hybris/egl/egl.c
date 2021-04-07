@@ -163,6 +163,21 @@ EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 	return real_display;
 }
 
+EGLDisplay eglGetPlatformDisplay(EGLenum platform, void *native_display, const EGLAttrib *attrib_list)
+{
+	// Silence warning
+	(void) attrib_list;
+
+	if (platform == EGL_NONE) {
+		// We don't really care about the platform, even though we
+		// should.
+		// Return EGL_NO_DISPLAY at least if platform is EGL_NONE.
+		return EGL_NO_DISPLAY;
+	}
+
+	return eglGetDisplay((EGLNativeDisplayType) native_display);
+}
+
 HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglInitialize, EGLDisplay, EGLint *, EGLint *);
 
 EGLBoolean eglTerminate(EGLDisplay dpy)
