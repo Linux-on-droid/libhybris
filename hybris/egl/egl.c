@@ -227,6 +227,10 @@ EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
 			break;
 #endif
 
+		case EGL_PLATFORM_X11_KHR:
+			hybris_ws = "x11";
+			break;
+
 		default:
 			__eglHybrisSetError(EGL_BAD_PARAMETER);
 			return EGL_NO_DISPLAY;
@@ -509,6 +513,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_SAMENAME(eglSwapInterval),
 	OVERRIDE_SAMENAME(eglCreateContext),
 	OVERRIDE_SAMENAME(eglSwapBuffers),
+	OVERRIDE_SAMENAME(eglGetConfigAttrib),
 	OVERRIDE_SAMENAME(eglGetProcAddress),
 	/*
 	 * EGL_EXT_platform_base, in case Android EGL or glvnd advertise its

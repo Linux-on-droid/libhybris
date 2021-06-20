@@ -162,7 +162,7 @@ void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval
 
 EGLBoolean ws_eglGetConfigAttrib(struct _EGLDisplay *display, EGLConfig config, EGLint attribute, EGLint *value)
 {
-	_init_ws();
+	assert(ws != NULL);
 	if (ws->eglGetConfigAttrib)
 		return ws->eglGetConfigAttrib(display, config, attribute, value);
     else
