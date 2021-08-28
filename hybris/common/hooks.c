@@ -3358,7 +3358,7 @@ static void __hybris_linker_init()
         name = LINKER_NAME_Q;
 #endif
 #if defined(WANT_LINKER_O)
-    if (sdk_version <= 27)
+    if (sdk_version <= 28)
         name = LINKER_NAME_O;
 #endif
 #if defined(WANT_LINKER_N)
