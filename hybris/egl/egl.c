@@ -223,6 +223,15 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	return result;
 }
 
+EGLSurface eglCreatePlatformWindowSurface(EGLDisplay dpy, EGLConfig config,
+		void *native_window,
+		const EGLAttrib *attrib_list)
+{
+	/* eglCreateWindowSurface will check if the window is correct */
+	return eglCreateWindowSurface(dpy, config, (EGLNativeWindowType) native_window,
+		(const EGLint *) attrib_list);
+}
+
 HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLSurface, eglCreatePbufferSurface, EGLDisplay, EGLConfig, const EGLint *);
 HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLSurface, eglCreatePixmapSurface, EGLDisplay, EGLConfig, EGLNativePixmapType, const EGLint *);
 
