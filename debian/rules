@@ -44,25 +44,35 @@ DEFAULT_CONFIGURATION = \
 ARCH_CONFIGURATION =
 
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
+FLATPAK_ARCH = arm
+FLATPAK_LIBDIR = lib
 ARCH_CONFIGURATION = \
 	--enable-arch=arm \
 	--enable-mali-quirks \
 	--enable-adreno-quirks
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
+FLATPAK_ARCH = aarch64
+FLATPAK_LIBDIR = lib64
 ARCH_CONFIGURATION = \
 	--enable-arch=arm64 \
 	--enable-mali-quirks \
 	--enable-adreno-quirks
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), i386))
+FLATPAK_ARCH = x86
+FLATPAK_LIBDIR = lib
 ARCH_CONFIGURATION = \
 	--enable-arch=x86
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), amd64))
+FLATPAK_ARCH = x86_64
+FLATPAK_LIBDIR = lib64
 ARCH_CONFIGURATION = \
 	--enable-arch=x86
 endif
+
+FLATPAK_EXTENSION_TARGET = var/lib/flatpak/extension/org.freedesktop.Platform.GL.hybris/$(FLATPAK_ARCH)/1.4/$(FLATPAK_LIBDIR)
 
 override_dh_auto_configure:
 	dh_auto_configure --sourcedirectory=hybris -- \
@@ -101,6 +111,12 @@ override_dh_install:
 
 	# empty ld.so.conf for the fake multi-arch alternative
 	echo "" > "$(CURDIR)/debian/$(PKG_driver)/$(alt_ld_so_conf_path)"
+
+	# Create the flatpak extension
+	mkdir -p $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
+	for pkg in $(PKG_driver) libhybris-common1 libhardware2; do \
+		cp -Ra $(CURDIR)/debian/$$pkg/$(libdir)/* $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET); \
+	done
 
 override_dh_shlibdeps:
 	dh_shlibdeps -l"$(CURDIR)/debian/$(PKG_driver)/$(PKG_libdir)"

@@ -148,3 +148,20 @@ Description: Allows one to run bionic-based HW adaptations in glibc systems - te
  .
  Hybris is a solution that allows the use of bionic-based HW adaptations in
  glibc systems.
+
+Package: flatpak-extension-gl-hybris
+Architecture: amd64 arm64 armhf i386
+# hard dependencies are not really needed since we're going to
+# copy the libraries anyway, but it's good to avoid eventual desyncs
+Depends: ${misc:Depends},
+         libhybris (= ${binary:Version}),
+         libhybris-common1 (= ${binary:Version}),
+         libhardware2 (= ${binary:Version}),
+Recommends: flatpak-hybris
+Description: libhybris extension for the org.freedesktop.Platform.GL runtime
+ This package contains all of the libhybris libraries, shipped as an
+ extension of the org.freedesktop.Platform.GL.
+ .
+ This allows usage of libhybris inside flatpaks as well. Note that installing
+ this package won't enable the extension automatically.
+ Check the flatpak-hybris package for more details.
