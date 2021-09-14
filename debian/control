@@ -5,6 +5,9 @@ Build-Depends: android-headers,
                debhelper (>= 12),
                libgles2-mesa-dev,
                libwayland-dev,
+               libx11-xcb-dev,
+               libxcb-present-dev,
+               libxext-dev,
                pkg-config,
                quilt
 Standards-Version: 4.4.1
