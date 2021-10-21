@@ -78,9 +78,17 @@ int main(int argc, char *argv[])
     cl_int ret;
 
     /* Get Platforms */
+#ifndef LIBHYBRIS_WANTS_CLICD
     ret = clGetPlatformIDs(0, NULL, &num_platforms);
+#else
+    ret = clIcdGetPlatformIDsKHR(0, NULL, &num_platforms);
+#endif
     platforms = (cl_platform_id *) malloc(sizeof(cl_platform_id) * num_platforms);
+#ifndef LIBHYBRIS_WANTS_CLICD
     ret = clGetPlatformIDs(num_platforms, platforms, NULL);
+#else
+    ret = clIcdGetPlatformIDsKHR(num_platforms, platforms, NULL);
+#endif
     assert(ret == CL_SUCCESS);
     printf("Found %i platforms\n", num_platforms);
 

@@ -114,6 +114,19 @@ AS_IF( [test "$enable_glvnd" = "yes"], [
   AC_DEFINE([GL_LIB_SUFFIX], [""], [Suffix for GL-related libraries])
 ])
 
+AC_ARG_ENABLE(clicd,
+  [  --enable-clicd                                 Enable OpenCL ICD support])
+AM_CONDITIONAL( [WANT_CLICD], [test "$enable_clicd" = "yes"])
+AS_IF( [test "$enable_clicd" = "yes"], [
+  AC_DEFINE([WANT_CLICD], [], [Enable ICD support])
+
+  AC_SUBST([CL_LIB_SUFFIX], ["_libhybris"])
+  AC_DEFINE([CL_LIB_SUFFIX], ["_libhybris"], [Suffix for CL-related libraries])
+], [
+  AC_SUBST([CL_LIB_SUFFIX], [""])
+  AC_DEFINE([CL_LIB_SUFFIX], [""], [Suffix for CL-related libraries])
+])
+
 AC_ARG_ENABLE(wayland_serverside_buffers,
   [  --enable-wayland_serverside_buffers            Enable serverside buffer allocation for wayland (default=enabled)],
   [wayland_serverside_buffers=$enableval],
@@ -341,6 +354,7 @@ AC_CONFIG_FILES([
 	hwc2/libhwc2.pc
 	opencl/Makefile
 	opencl/OpenCL.pc
+	opencl/libhybris.icd
 	tests/Makefile
 ])
 

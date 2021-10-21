@@ -379,6 +379,10 @@ test_opencl_SOURCES = test_opencl.c
 test_opencl_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
+if WANT_CLICD
+test_opencl_CFLAGS += \
+        -DLIBHYBRIS_WANTS_CLICD
+endif
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/opencl/libOpenCL.la
+	$(top_builddir)/opencl/libOpenCL$(CL_LIB_SUFFIX).la

@@ -52,6 +52,7 @@ static cl_int (*_clEnqueueSVMFree)(cl_command_queue, cl_uint, void *[], void (CL
 
 static cl_int (*_clEnqueueSVMFreeARM)(cl_command_queue, cl_uint, void *[], void (CL_CALLBACK * /*pfn_free_func*/)(cl_command_queue, cl_uint, void *[], void *), void *, cl_uint, const cl_event *, cl_event *) = NULL;
 
+static cl_int (*_clGetPlatformIDs)(cl_uint, cl_platform_id *, cl_uint *) = NULL;
 
 static void _init_androidopencl()
 {
@@ -64,7 +65,9 @@ static inline void hybris_opencl_initialize()
 }
 
 /* Platform API */
+#ifndef LIBHYBRIS_WANTS_CLICD
 HYBRIS_IMPLEMENT_FUNCTION3(opencl, cl_int, clGetPlatformIDs, cl_uint, cl_platform_id *, cl_uint *);
+#endif
 
 HYBRIS_IMPLEMENT_FUNCTION5(opencl, cl_int, clGetPlatformInfo, cl_platform_id, cl_platform_info, size_t, void *, size_t *);
 
@@ -426,7 +429,18 @@ HYBRIS_IMPLEMENT_FUNCTION5(opencl, cl_int, clEnqueueTask, cl_command_queue, cl_k
  * cl_khr_icd extension
  */
 
+#ifndef LIBHYBRIS_WANTS_CLICD
 HYBRIS_IMPLEMENT_FUNCTION3(opencl, cl_int, clIcdGetPlatformIDsKHR, cl_uint, cl_platform_id *, cl_uint *);
+#else
+cl_int clIcdGetPlatformIDsKHR(cl_uint num_entries,
+                              cl_platform_id *platforms,
+                              cl_uint *num_platforms)
+{
+	HYBRIS_DLSYSM(opencl, &_clGetPlatformIDs, "clGetPlatformIDs");
+
+	return (*_clGetPlatformIDs)(num_entries, platforms, num_platforms);
+}
+#endif
 
 /*
  * cl_khr_terminate_context extension

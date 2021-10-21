@@ -48,6 +48,7 @@ hybris/input/libis.pc
 hybris/libnfc_ndef_nxp/libnfc_ndef_nxp.pc
 hybris/libnfc_nxp/libnfc_nxp.pc
 hybris/libsync/libsync.pc
+hybris/opencl/libhybris.icd
 hybris/properties/libandroid-properties.pc
 hybris/sf/libsf.pc
 hybris/vibrator/libvibrator.pc

@@ -1,35 +1,45 @@
 lib_LTLIBRARIES = \
-	libOpenCL.la
+	libOpenCL$(CL_LIB_SUFFIX).la
 
-libOpenCL_la_SOURCES = \
+libOpenCL__CL_LIB_SUFFIX__la_SOURCES = \
 	opencl.c
+
+if WANT_CLICD
+cl_icddir = $(sysconfdir)/OpenCL/vendors
+cl_icd_DATA = libhybris.icd
+endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = OpenCL.pc
 
-libOpenCL_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -DPKGLIBDIR="\"$(pkglibdir)/\"" -I$(top_srcdir)/common
+libOpenCL__CL_LIB_SUFFIX__la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -DPKGLIBDIR="\"$(pkglibdir)/\"" -I$(top_srcdir)/common
 if WANT_MESA
-libOpenCL_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+libOpenCL__CL_LIB_SUFFIX__la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
 if WANT_TRACE
-libOpenCL_la_CFLAGS += -DDEBUG
+libOpenCL__CL_LIB_SUFFIX__la_CFLAGS += -DDEBUG
 endif
 if WANT_DEBUG
-libOpenCL_la_CFLAGS += -ggdb -O0
+libOpenCL__CL_LIB_SUFFIX__la_CFLAGS += -ggdb -O0
+endif
+if WANT_CLICD
+libOpenCL__CL_LIB_SUFFIX__la_CFLAGS += -DLIBHYBRIS_WANTS_CLICD
 endif
 
-libOpenCL_la_CXXFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -I$(top_srcdir)/common -DPKGLIBDIR="\"$(pkglibdir)/\""
+libOpenCL__CL_LIB_SUFFIX__la_CXXFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -I$(top_srcdir)/common -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_MESA
-libOpenCL_la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+libOpenCL__CL_LIB_SUFFIX__la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
 if WANT_TRACE
-libOpenCL_la_CXXFLAGS += -DDEBUG
+libOpenCL__CL_LIB_SUFFIX__la_CXXFLAGS += -DDEBUG
 endif
 if WANT_DEBUG
-libOpenCL_la_CXXFLAGS += -ggdb -O0
+libOpenCL__CL_LIB_SUFFIX__la_CXXFLAGS += -ggdb -O0
 endif
-libOpenCL_la_LDFLAGS = \
+if WANT_CLICD
+libOpenCL__CL_LIB_SUFFIX__la_CXXFLAGS += -DLIBHYBRIS_WANTS_CLICD
+endif
+libOpenCL__CL_LIB_SUFFIX__la_LDFLAGS = \
 	-ldl \
 	$(top_builddir)/common/libhybris-common.la \
 	-version-info "1":"0":"0"
-
