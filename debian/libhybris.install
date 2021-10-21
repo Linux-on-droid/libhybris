@@ -14,4 +14,6 @@ usr/lib/*/libhybris/*.so
 usr/lib/*/libEGL_libhybris.so.*
 usr/lib/*/libGLESv2_libhybris.so.*
 usr/lib/*/libGLESv1_CM_libhybris.so.*
+usr/lib/*/libOpenCL_libhybris.so.*
 usr/share/glvnd/egl_vendor.d/10_libhybris.json
+etc/OpenCL/vendors/libhybris.icd

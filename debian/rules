@@ -43,7 +43,8 @@ DEFAULT_CONFIGURATION = \
 	--with-android-headers=$(ANDROID_HEADERS_PATH) \
 	--enable-property-cache \
 	--enable-experimental \
-	--enable-glvnd
+	--enable-glvnd \
+	--enable-clicd
 ARCH_CONFIGURATION =
 
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
@@ -91,6 +92,7 @@ override_dh_install:
 		cp -Ra $(CURDIR)/debian/$$pkg/$(libdir)/* $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR); \
 	done
 	cp -Ra $(CURDIR)/debian/$(PKG_driver)/$(datadir)/glvnd $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
+	cp -Ra $(CURDIR)/debian/$(PKG_driver)/$(sysconfdir)/OpenCL $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
 
 override_dh_shlibdeps:
 	dh_shlibdeps -l"$(CURDIR)/debian/$(PKG_driver)/$(PKG_libdir)"
