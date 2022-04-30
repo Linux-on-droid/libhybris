@@ -94,6 +94,9 @@ override_dh_install:
 	cp -Ra $(CURDIR)/debian/$(PKG_driver)/$(datadir)/glvnd $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
 	cp -Ra $(CURDIR)/debian/$(PKG_driver)/$(sysconfdir)/OpenCL $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
 
+	# Workaround for gtk4 bug
+	sed -i 's|eglSwapBuffersWithDamage|eglSwapBuffersWithDamag3|g' $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR)/libEGL_libhybris.so.0.0.0
+
 override_dh_shlibdeps:
 	dh_shlibdeps -l"$(CURDIR)/debian/$(PKG_driver)/$(PKG_libdir)"
 
