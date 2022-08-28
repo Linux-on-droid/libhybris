@@ -97,6 +97,9 @@ override_dh_install:
 	# Workaround for gtk4 bug
 	sed -i 's|eglSwapBuffersWithDamage|eglSwapBuffersWithDamag3|g' $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR)/libEGL_libhybris.so.0.0.0
 
+	# Strip recent glibc symbols on the flatpak extension
+	find $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR) -type f -name \*.so\* -exec $(CURDIR)/debian/clear_symbols.sh \{\} \;
+
 override_dh_shlibdeps:
 	dh_shlibdeps -l"$(CURDIR)/debian/$(PKG_driver)/$(PKG_libdir)"
 

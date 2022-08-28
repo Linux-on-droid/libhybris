@@ -10,6 +10,8 @@ Build-Depends: android-headers,
                dh-exec,
                pkg-config,
                libglvnd-dev,
+               binutils,
+               patchelf,
                python3,
                quilt
 Standards-Version: 4.4.1
