@@ -73,4 +73,4 @@ hybris/tests/test_ui
 
 
 # Added by Droidian
-!.circleci/
+!.circleci/*
