@@ -71,3 +71,6 @@ hybris/tests/test_offscreen_rendering
 hybris/tests/test_sensors
 hybris/tests/test_ui
 
+
+# Added by Droidian
+!.circleci/
