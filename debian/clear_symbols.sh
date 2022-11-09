@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-TO_STRIP="GLIBC_2.34 GLIBC_2.35"
+TO_STRIP="GLIBC_2.34 GLIBC_2.35 GLIBC_2.36"
 LIB="${1}"
 
 for version in ${TO_STRIP}; do
