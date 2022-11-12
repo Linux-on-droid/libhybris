@@ -1,7 +1,6 @@
 /****************************************************************************************
  **
- ** Copyright (C) 2013 Jolla Ltd.
- ** Contact: Carsten Munk <carsten.munk@jollamobile.com>
+ ** Copyright (C) 2013-2022 Jolla Ltd.
  ** All rights reserved.
  **
  ** This file is part of Wayland enablement for libhybris
@@ -26,7 +25,7 @@
 
 #ifndef Wayland_WINDOW_H
 #define Wayland_WINDOW_H
-#include "nativewindowbase.h"
+#include "eglnativewindowbase.h"
 #include <linux/fb.h>
 
 #include <hybris/gralloc/gralloc.h>
@@ -83,7 +82,7 @@ class ClientWaylandBuffer : public WaylandNativeWindowBuffer
 friend class WaylandNativeWindow;
 protected:
     ClientWaylandBuffer()
-        : {}
+    {}
 
     ClientWaylandBuffer(    unsigned int width,
                             unsigned int height,
@@ -101,7 +100,7 @@ protected:
         this->other = NULL;
         int alloc_ok = hybris_gralloc_allocate(this->width ? this->width : 1, this->height ? this->height : 1,
                 this->format, this->usage,
-                &this->handle, &this->stride);
+                &this->handle, (uint32_t*)&this->stride);
         assert(alloc_ok == 0);
         this->youngest = 0;
         this->common.incRef(&this->common);
@@ -141,7 +140,7 @@ public:
 
 #endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
-class WaylandNativeWindow : public BaseNativeWindow {
+class WaylandNativeWindow : public EGLBaseNativeWindow {
 public:
     WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, android_wlegl *wlegl);
     ~WaylandNativeWindow();
@@ -180,7 +179,7 @@ protected:
     virtual unsigned int transformHint() const;
     virtual unsigned int getUsage() const;
     // perform calls
-    virtual int setUsage(int usage);
+    virtual int setUsage(uint64_t usage);
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
@@ -204,7 +203,7 @@ private:
     int m_format;
     unsigned int m_defaultWidth;
     unsigned int m_defaultHeight;
-    unsigned int m_usage;
+    uint64_t m_usage;
     struct android_wlegl *m_android_wlegl;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
@@ -213,10 +212,6 @@ private:
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
     int m_swap_interval;
-#if WAYLAND_VERSION_MAJOR == 0 || (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR < 6)
-    static int wl_roundtrip_queue(struct wl_display *display,
-                                  struct wl_event_queue *queue);
-#endif
 };
 
 #endif
