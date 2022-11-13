@@ -1,4 +1,4 @@
-usr/lib/*/libhybris-eglplatformcommon.so.*
+usr/lib/*/libhybris-*platformcommon.so.*
 usr/lib/*/libhybris-hwcomposerwindow.so.*
 usr/lib/*/libsync.so.*
 usr/lib/*/libhwc2.so.*
@@ -9,6 +9,7 @@ usr/lib/*/libis.so.*
 usr/lib/*/libcamera.so.*
 usr/lib/*/libwifi.so.*
 usr/lib/*/libnfc_nxp.so.*
+usr/lib/*/libnfc_ndef_nxp.so.*
 usr/lib/*/libvibrator.so.*
 usr/lib/*/libhybris/*.so
 usr/lib/*/libEGL_libhybris.so.*

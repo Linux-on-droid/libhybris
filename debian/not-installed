@@ -7,6 +7,7 @@
 /usr/include/GLES
 /usr/include/CL/
 /usr/include/GLES2
+/usr/include/GLES3
 /usr/include/EGL/
 /usr/include/KHR/
 /usr/include/VG/
