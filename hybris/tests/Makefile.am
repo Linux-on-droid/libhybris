@@ -382,7 +382,11 @@ test_opencl_CFLAGS = \
 	$(ANDROID_HEADERS_CFLAGS)
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/opencl/libOpenCL.la
+	$(top_builddir)/opencl/libOpenCL$(CL_LIB_SUFFIX).la
+
+if WANT_CLICD
+test_opencl_CFLAGS += -DLIBHYBRIS_WANTS_CLICD
+endif
 
 if WANT_WAYLAND
 test_vulkan_SOURCES = test_vulkan.cpp
