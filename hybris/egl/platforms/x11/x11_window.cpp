@@ -589,7 +589,7 @@ int X11NativeWindow::setBuffersDimensions(int width, int height) {
     return NO_ERROR;
 }
 
-int X11NativeWindow::setUsage(int usage) {
+int X11NativeWindow::setUsage(uint64_t usage) {
 //     if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
 //     {
 //         TRACE("old-usage:x%x new-usage:x%x", m_usage, usage);

@@ -26,7 +26,7 @@
 
 #ifndef X11_WINDOW_H
 #define X11_WINDOW_H
-#include "nativewindowbase.h"
+#include "eglnativewindowbase.h"
 #include <linux/fb.h>
 #include <hybris/gralloc/gralloc.h>
 
@@ -113,7 +113,7 @@ public:
 
 };
 
-class X11NativeWindow : public BaseNativeWindow {
+class X11NativeWindow : public EGLBaseNativeWindow {
 public:
     X11NativeWindow(Display* xl_display, Window xl_window, bool drihybris);
     ~X11NativeWindow();
@@ -144,7 +144,7 @@ protected:
     virtual unsigned int transformHint() const;
     virtual unsigned int getUsage() const;
     // perform calls
-    virtual int setUsage(int usage);
+    virtual int setUsage(uint64_t usage);
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
