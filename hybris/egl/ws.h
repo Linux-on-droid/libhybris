@@ -32,6 +32,7 @@ extern struct ws_egl_interface hybris_egl_interface;
 
 struct _EGLDisplay {
 	EGLDisplay dpy;
+	EGLNativeDisplayType display_id;
 };
 
 struct egl_image
