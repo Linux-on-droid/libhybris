@@ -130,6 +130,18 @@ for count in range(MAX_ARGS):
     {END}
 """.format(**locals()))
 
+    if count > 0:
+        call_names = ", ".join(["hybris_egl_get_real_display(n1)"] + names[1:])
+        print("""
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION{count}({wrapper_signature}) \\
+    return_type symbol({signature_with_names}) \\
+    {BEGIN} \\
+        static return_type (*f)({signature}) FP_ATTRIB = NULL; \\
+        HYBRIS_DLSYSM(name, &f, #symbol); \\
+        return f({call_names}); \\
+    {END}
+""".format(**locals()))
+
 for count in range(MAX_ARGS):
     args = ['a%d' % (x+1) for x in range(count)]
     names = ['n%d' % (x+1) for x in range(count)]
