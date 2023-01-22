@@ -192,6 +192,21 @@ static const char * _defaultEglPlatform()
 	return egl_platform;
 }
 
+static EGLenum _getPlatformFromString(const char* hybris_ws)
+{
+	if (strcmp(hybris_ws, "null") == 0) {
+		return EGL_PLATFORM_ANDROID_KHR;
+#ifdef WANT_WAYLAND
+	} else if (strcmp(hybris_ws, "wayland") == 0) {
+		return EGL_PLATFORM_WAYLAND_KHR;
+#endif
+	} else if (strcmp(hybris_ws, "x11") == 0) {
+		return EGL_PLATFORM_X11_KHR;
+	} else {
+		return EGL_NONE;
+	}
+}
+
 #ifndef WANT_GLVND
 static
 #endif
