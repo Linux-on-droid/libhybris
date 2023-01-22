@@ -441,6 +441,7 @@ static EGLSurface _my_eglCreatePlatformWindowSurfaceEXT(EGLDisplay dpy, EGLConfi
 
 HYBRIS_EGL_IMPLEMENT_FUNCTION3(egl, EGLSurface, eglCreatePbufferSurface, EGLDisplay, EGLConfig, const EGLint *);
 HYBRIS_EGL_IMPLEMENT_FUNCTION4(egl, EGLSurface, eglCreatePixmapSurface, EGLDisplay, EGLConfig, EGLNativePixmapType, const EGLint *);
+HYBRIS_EGL_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglSetDamageRegionKHR, EGLDisplay, EGLSurface, EGLint *, EGLint);
 
 EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 {
