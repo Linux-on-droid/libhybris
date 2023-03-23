@@ -90,12 +90,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION1(name, return_type, symbol, a1) \
+    return_type symbol(a1 n1) \
+    { \
+        static return_type (*f)(a1) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1)); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION2(name, return_type, symbol, a1, a2) \
     return_type symbol(a1 n1, a2 n2) \
     { \
         static return_type (*f)(a1, a2) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION2(name, return_type, symbol, a1, a2) \
+    return_type symbol(a1 n1, a2 n2) \
+    { \
+        static return_type (*f)(a1, a2) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2); \
     }
 
 
@@ -108,12 +126,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION3(name, return_type, symbol, a1, a2, a3) \
+    return_type symbol(a1 n1, a2 n2, a3 n3) \
+    { \
+        static return_type (*f)(a1, a2, a3) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION4(name, return_type, symbol, a1, a2, a3, a4) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4) \
     { \
         static return_type (*f)(a1, a2, a3, a4) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION4(name, return_type, symbol, a1, a2, a3, a4) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4); \
     }
 
 
@@ -126,12 +162,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION5(name, return_type, symbol, a1, a2, a3, a4, a5) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION6(name, return_type, symbol, a1, a2, a3, a4, a5, a6) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION6(name, return_type, symbol, a1, a2, a3, a4, a5, a6) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6); \
     }
 
 
@@ -144,12 +198,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION7(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION8(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6, n7, n8); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION8(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8); \
     }
 
 
@@ -162,12 +234,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION9(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION10(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION10(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10); \
     }
 
 
@@ -180,12 +270,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION11(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION12(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION12(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12); \
     }
 
 
@@ -198,12 +306,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION13(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION14(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION14(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14); \
     }
 
 
@@ -216,12 +342,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION15(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION16(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION16(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16); \
     }
 
 
@@ -234,6 +378,15 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION17(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16, a17 n17) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION18(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16, a17 n17, a18 n18) \
     { \
@@ -243,12 +396,30 @@ int android_dladdr(const void *addr, void *info);
     }
 
 
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION18(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16, a17 n17, a18 n18) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18); \
+    }
+
+
 #define HYBRIS_IMPLEMENT_FUNCTION19(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) \
     return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16, a17 n17, a18 n18, a19 n19) \
     { \
         static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) FP_ATTRIB = NULL; \
         HYBRIS_DLSYSM(name, &f, #symbol); \
         return f(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19); \
+    }
+
+
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION19(name, return_type, symbol, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) \
+    return_type symbol(a1 n1, a2 n2, a3 n3, a4 n4, a5 n5, a6 n6, a7 n7, a8 n8, a9 n9, a10 n10, a11 n11, a12 n12, a13 n13, a14 n14, a15 n15, a16 n16, a17 n17, a18 n18, a19 n19) \
+    { \
+        static return_type (*f)(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) FP_ATTRIB = NULL; \
+        HYBRIS_DLSYSM(name, &f, #symbol); \
+        return f(hybris_egl_get_real_display(n1), n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19); \
     }
 
 

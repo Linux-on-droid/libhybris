@@ -94,9 +94,6 @@ override_dh_install:
 	cp -Ra $(CURDIR)/debian/$(PKG_driver)/$(datadir)/glvnd $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
 	cp -Ra $(CURDIR)/debian/$(PKG_driver)/$(sysconfdir)/OpenCL $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)
 
-	# Workaround for gtk4 bug
-	sed -i 's|eglSwapBuffersWithDamage|eglSwapBuffersWithDamag3|g' $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR)/libEGL_libhybris.so.0.0.0
-
 	# Strip recent glibc symbols on the flatpak extension
 	find $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR) -type f -name \*.so\* -exec $(CURDIR)/debian/clear_symbols.sh \{\} \;
 

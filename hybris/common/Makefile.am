@@ -1,5 +1,7 @@
 lib_LTLIBRARIES = \
 	libhybris-common.la
+noinst_LTLIBRARIES = \
+	hooks/libhybris-hooks.la
 
 SUBDIRS =
 
@@ -31,6 +33,7 @@ libhybris_common_la_SOURCES = \
 	strlcpy.c \
 	strlcat.c \
 	logging.c \
+	native_handle.c \
 	sysconf.c \
 	dso_handle_counters.cpp \
 	legacy_properties/properties.c \
@@ -48,6 +51,9 @@ libhybris_common_la_SOURCES += \
 	wrappers.c \
 	wrapper_code_generic_arm.c
 endif
+
+libhybris_common_la_LIBADD = \
+	hooks/libhybris-hooks.la
 
 libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -101,3 +107,10 @@ libhybris_common_la_LDFLAGS = \
 	-lstdc++ \
 	-lpthread \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"
+
+hooks_libhybris_hooks_la_SOURCES = \
+	hooks/atexit.cpp
+
+hooks_libhybris_hooks_la_CXXFLAGS = \
+	$(libhybris_common_la_CXXFLAGS) \
+	-fvisibility=hidden

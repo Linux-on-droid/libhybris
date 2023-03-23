@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Generate wrapper macros: hybris/include/hybris/internal/binding.h
 #
@@ -52,7 +52,7 @@ AUTO_GENERATED_WARNING = """
  **/
 """
 
-print """
+print("""
 /**
  * Copyright (C) 2013 Simon Busch <morphis@gravedo.de>
  *               2012 Canonical Ltd
@@ -82,13 +82,13 @@ print """
 void *android_dlopen(const char *filename, int flag);
 void *android_dlsym(void *name, const char *symbol);
 int android_dlclose(void *handle);
-const char *android_dlerror(void);
+char *android_dlerror(void);
 int android_dladdr(const void *addr, void *info);
-"""
+""")
 
-print AUTO_GENERATED_WARNING
+print(AUTO_GENERATED_WARNING)
 
-print """
+print("""
 #define HYBRIS_DLSYSM(name, fptr, sym) \\
     if (!name##_handle) \\
         hybris_##name##_initialize(); \\
@@ -110,7 +110,7 @@ print """
         return android_dlsym(name##_handle, sym) != NULL; \\
     }
 
-"""
+""")
 
 for count in range(MAX_ARGS):
     args = ['a%d' % (x+1) for x in range(count)]
@@ -120,7 +120,7 @@ for count in range(MAX_ARGS):
     signature_with_names = ', '.join(' '.join(x) for x in zip(args, names))
     call_names = ', '.join(names)
 
-    print """
+    print("""
 #define HYBRIS_IMPLEMENT_FUNCTION{count}({wrapper_signature}) \\
     return_type symbol({signature_with_names}) \\
     {BEGIN} \\
@@ -128,7 +128,19 @@ for count in range(MAX_ARGS):
         HYBRIS_DLSYSM(name, &f, #symbol); \\
         return f({call_names}); \\
     {END}
-""".format(**locals())
+""".format(**locals()))
+
+    if count > 0:
+        call_names = ", ".join(["hybris_egl_get_real_display(n1)"] + names[1:])
+        print("""
+#define HYBRIS_EGL_IMPLEMENT_FUNCTION{count}({wrapper_signature}) \\
+    return_type symbol({signature_with_names}) \\
+    {BEGIN} \\
+        static return_type (*f)({signature}) FP_ATTRIB = NULL; \\
+        HYBRIS_DLSYSM(name, &f, #symbol); \\
+        return f({call_names}); \\
+    {END}
+""".format(**locals()))
 
 for count in range(MAX_ARGS):
     args = ['a%d' % (x+1) for x in range(count)]
@@ -137,7 +149,7 @@ for count in range(MAX_ARGS):
     signature = ', '.join(args)
     signature_with_names = ', '.join(' '.join(x) for x in zip(args, names))
     call_names = ', '.join(names)
-    print """
+    print("""
 #define HYBRIS_IMPLEMENT_VOID_FUNCTION{count}({wrapper_signature}) \\
     void symbol({signature_with_names}) \\
     {BEGIN} \\
@@ -145,12 +157,11 @@ for count in range(MAX_ARGS):
         HYBRIS_DLSYSM(name, &f, #symbol); \\
         f({call_names}); \\
     {END}
-""".format(**locals())
+""".format(**locals()))
 
 # Print it again, so people wanting to append new macros will see it
-print AUTO_GENERATED_WARNING
+print(AUTO_GENERATED_WARNING)
 
-print """
+print("""
 #endif /* HYBRIS_BINDING_H_ */
-"""
-
+""")

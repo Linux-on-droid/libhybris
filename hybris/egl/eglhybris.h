@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012 Simon Busch <morphis@gravedo.de>
+ * Copyright (c) 2022 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +22,13 @@
 /* Needed for ICS window.h */
 #include <string.h>
 #include <system/window.h>
+#include "platformcommon.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void __eglHybrisSetError(EGLint error);
-
-void hybris_dump_buffer_to_file(struct ANativeWindowBuffer *buf);
 
 void *hybris_android_egl_dlsym(const char *symbol);
 int hybris_egl_has_mapping(EGLSurface surface);

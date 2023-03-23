@@ -4,6 +4,7 @@ Maintainer: Halium Developers <admin@halium.org>
 Build-Depends: android-headers,
                debhelper (>= 12),
                libwayland-dev,
+               libwayland-egl-backend-dev,
                libx11-xcb-dev,
                libxcb-present-dev,
                libxext-dev,

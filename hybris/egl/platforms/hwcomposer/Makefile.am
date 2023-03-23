@@ -14,6 +14,7 @@ libhybris_hwcomposerwindow_la_SOURCES = \
 libhybris_hwcomposerwindow_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
 	$(ANDROID_HEADERS_CFLAGS)
@@ -27,6 +28,7 @@ endif
 
 libhybris_hwcomposerwindow_la_LDFLAGS = \
 	-version-info "1":"0":"0" \
+	$(top_builddir)/platforms/common/libhybris-platformcommon.la \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/gralloc/libgralloc.la
 
@@ -44,6 +46,7 @@ eglplatform_hwcomposer_la_SOURCES = \
 eglplatform_hwcomposer_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
 	$(ANDROID_HEADERS_CFLAGS)
