@@ -100,9 +100,11 @@ server_wlegl_create_buffer(struct wl_client *client,
 
 	buffer = server_wlegl_buffer_create(client, id, width, height, stride,
 					    format, usage, native, wlegl);
+	// hybris_gralloc_import_buffer copied the raw handle
+	native_handle_close((native_handle_t *)native);
+	native_handle_delete((native_handle_t *)native);
+
 	if (!buffer) {
-		native_handle_close((native_handle_t *)native);
-		native_handle_delete((native_handle_t *)native);
 		wl_resource_post_error(resource,
 				       ANDROID_WLEGL_ERROR_BAD_HANDLE,
 				       "invalid native handle");
@@ -126,6 +128,18 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 	int _stride;
 
 	usage |= GRALLOC_USAGE_HW_COMPOSER;
+
+	// frameworks/native/libs/gui/BufferQueueProducer.cpp:1434 (android-11.0.0_r37)
+	// TODO: do we need to specify a different default format in some cases?
+	// This avoids a crash if the pixel format is unspecified.
+	// Initially i chose HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, but the documentation
+	// for the pixel formats says about the IMPLEMENTATION_DEFINED format:
+	// "This format must never be used with any of the BufferUsage::CPU_* usage flags."
+	// (hardware/interfaces/graphics/common/1.0/types.hal).
+	// The default in android seems to be RGBA_8888 if format == 0 (unless changed,
+	// via a call to setDefaultBufferFormat), so let's just use RGBA_8888 for now such
+	// that we don't need to analyze the usage flags.
+	if (format == 0) format = HAL_PIXEL_FORMAT_RGBA_8888;
 
 	int r = hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
         if (r) {
