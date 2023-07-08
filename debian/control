@@ -163,7 +163,7 @@ Architecture: amd64 arm64 armhf i386
 # copy the libraries anyway, but it's good to avoid eventual desyncs
 Depends: ${misc:Depends},
          libhybris (= ${binary:Version}),
-         libhybris-common1 (= ${binary:Version}),
+         libhybris-common1,
          libhardware2 (= ${binary:Version}),
 Recommends: flatpak-hybris
 Description: libhybris extension for the org.freedesktop.Platform.GL runtime
