@@ -35,24 +35,26 @@ MediaBufferPrivate* MediaBufferPrivate::toPrivate(MediaBufferWrapper *buffer)
 }
 
 #if ANDROID_VERSION_MAJOR>=8
-MediaBufferPrivate::MediaBufferPrivate(android::MediaBufferBase *buffer) :
+MediaBufferPrivate::MediaBufferPrivate(android::MediaBufferBase *buffer, bool managedByWrapper) :
 #else
-MediaBufferPrivate::MediaBufferPrivate(android::MediaBuffer *buffer) :
+MediaBufferPrivate::MediaBufferPrivate(android::MediaBuffer *buffer, bool managedByWrapper) :
 #endif
     buffer(buffer),
     return_callback(NULL),
-    return_callback_data(NULL)
+    return_callback_data(NULL),
+    isBufferManagedByWrapper(managedByWrapper)
 {
 }
 
 MediaBufferPrivate::MediaBufferPrivate() :
-    buffer(NULL)
+    buffer(NULL),
+    isBufferManagedByWrapper(true)
 {
 }
 
 MediaBufferPrivate::~MediaBufferPrivate()
 {
-    if (buffer)
+    if (isBufferManagedByWrapper && buffer)
         buffer->release();
 }
 
@@ -172,8 +174,7 @@ MediaMetaDataWrapper* media_buffer_get_meta_data(MediaBufferWrapper *buffer)
         return NULL;
 
 #if ANDROID_VERSION_MAJOR>=8
-    android::MetaData *md = new android::MetaData(d->buffer->meta_data());
-    return new MediaMetaDataPrivate(md);
+    return new MediaMetaDataPrivate(d->buffer);
 #else
     return new MediaMetaDataPrivate(d->buffer->meta_data());
 #endif
@@ -304,7 +305,7 @@ MediaBufferWrapper* media_abuffer_get_media_buffer_base(MediaABufferWrapper *buf
     android::sp<android::RefBase> holder;
     if (d->buffer->meta()->findObject("mediaBufferHolder", &holder)) {
         mbufb = (holder != nullptr) ?
-        static_cast<android::MediaBufferHolder*>(holder.get())->mediaBuffer() : nullptr;
+            static_cast<android::MediaBufferHolder*>(holder.get())->mediaBuffer() : nullptr;
     }
 #else
     android::MediaBufferBase *mbufb = d->buffer->getMediaBufferBase();

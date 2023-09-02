@@ -22,7 +22,11 @@
 
 #include <gui/Surface.h>
 
+#if ANDROID_VERSION_MAJOR>=11
+#include <mediadrm/ICrypto.h>
+#else
 #include <media/ICrypto.h>
+#endif
 
 #include <media/stagefright/foundation/AHandler.h>
 #include <media/stagefright/foundation/AString.h>
@@ -356,7 +360,9 @@ bool media_codec_source_read(MediaCodecSourceWrapper *source, MediaBufferWrapper
     if (err != android::OK)
         return false;
 
-    *buffer = new MediaBufferPrivate(buff);
+    // This MediaCodecSource layer is the oddball here. It's using a MediaBuffer that's
+    // created by MediaCodecSource into our private object, hence it's already managed.
+    *buffer = new MediaBufferPrivate(buff, false);
 
     return true;
 }
