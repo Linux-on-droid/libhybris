@@ -14,6 +14,7 @@ Build-Depends: android-headers,
                binutils,
                patchelf,
                python3,
+               glibc-downgrade,
                quilt
 Standards-Version: 4.4.1
 Section: libs
