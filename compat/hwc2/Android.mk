@@ -1,8 +1,8 @@
 # define ANDROID_VERSION MAJOR, MINOR and PATCH
 
-ANDROID_VERSION_MAJOR := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
-ANDROID_VERSION_MINOR := $(word 2, $(subst ., , $(PLATFORM_VERSION)))
-ANDROID_VERSION_PATCH := $(word 3, $(subst ., , $(PLATFORM_VERSION)))
+ANDROID_VERSION_MAJOR := 14
+ANDROID_VERSION_MINOR := 0
+ANDROID_VERSION_PATCH := 0
 
 ifeq ($(strip $(ANDROID_VERSION_MINOR)),)
 $(warning *** ANDROID_VERSION_MINOR undefined. Assuming 0)
@@ -65,6 +65,7 @@ LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
     android.hardware.graphics.composer@2.2 \
     android.hardware.graphics.composer@2.3 \
     android.hardware.graphics.composer@2.4 \
+    android.hardware.graphics.composer3-command-buffer \
     libhidlbase \
     libhidltransport \
     libhwbinder
@@ -82,8 +83,8 @@ LOCAL_HEADER_LIBRARIES += \
     android.hardware.graphics.composer3-command-buffer
 
 LOCAL_SHARED_LIBRARIES += \
-    android.hardware.graphics.composer3-V1-ndk \
     libbinder_ndk \
+    android.hardware.graphics.composer3-V3-ndk
 
 LOCAL_STATIC_LIBRARIES := \
     libaidlcommonsupport

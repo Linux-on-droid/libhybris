@@ -274,11 +274,11 @@ void HidlComposer::registerCallback(const sp<IComposerCallback>& callback) {
     }
 }
 
-void HidlComposer::resetCommands() {
+void HidlComposer::resetCommands(Display) {
     mWriter.reset();
 }
 
-Error HidlComposer::executeCommands() {
+Error HidlComposer::executeCommands(Display) {
     return execute();
 }
 
@@ -570,7 +570,8 @@ Error HidlComposer::setActiveConfig(Display display, Config config) {
 
 Error HidlComposer::setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
                                     int acquireFence, Dataspace dataspace,
-                                    const std::vector<IComposerClient::Rect>& damage) {
+                                    const std::vector<IComposerClient::Rect>& damage,
+                                    float /*hdrSdrRatio*/) {
     mWriter.selectDisplay(display);
 
     const native_handle_t* handle = nullptr;
@@ -634,7 +635,8 @@ Error HidlComposer::setClientTargetSlotCount(Display display) {
 }
 
 Error HidlComposer::validateDisplay(Display display, nsecs_t /*expectedPresentTime*/,
-                                    uint32_t* outNumTypes, uint32_t* outNumRequests) {
+                                    int32_t /*frameIntervalNs*/, uint32_t* outNumTypes,
+                                    uint32_t* outNumRequests) {
     ATRACE_NAME("HwcValidateDisplay");
     mWriter.selectDisplay(display);
     mWriter.validateDisplay();
@@ -650,8 +652,9 @@ Error HidlComposer::validateDisplay(Display display, nsecs_t /*expectedPresentTi
 }
 
 Error HidlComposer::presentOrValidateDisplay(Display display, nsecs_t /*expectedPresentTime*/,
-                                             uint32_t* outNumTypes, uint32_t* outNumRequests,
-                                             int* outPresentFence, uint32_t* state) {
+                                             int32_t /*frameIntervalNs*/, uint32_t* outNumTypes,
+                                             uint32_t* outNumRequests, int* outPresentFence,
+                                             uint32_t* state) {
     ATRACE_NAME("HwcPresentOrValidateDisplay");
     mWriter.selectDisplay(display);
     mWriter.presentOrvalidateDisplay();
@@ -1365,6 +1368,9 @@ void HidlComposer::registerCallback(ComposerCallback& callback) {
 
     registerCallback(sp<ComposerCallbackBridge>::make(callback, vsyncSwitchingSupported));
 }
+
+void HidlComposer::onHotplugConnect(Display) {}
+void HidlComposer::onHotplugDisconnect(Display) {}
 
 CommandReader::~CommandReader() {
     resetData();

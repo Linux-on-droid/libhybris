@@ -122,6 +122,7 @@ Error Device::createVirtualDisplay(uint32_t width, uint32_t height,
     display->setConnected(true);
     *outDisplay = display.get();
     mDisplays.emplace(displayId, std::move(display));
+    mComposer->onHotplugConnect(displayId);
     ALOGI("Created virtual display");
     return Error::NONE;
 }
@@ -147,6 +148,7 @@ void Device::onHotplug(hal::HWDisplayId displayId, hal::Connection connection) {
         auto newDisplay = std::make_unique<impl::Display>(*mComposer.get(), mCapabilities,
                                                           displayId, hal::DisplayType::PHYSICAL);
         newDisplay->setConnected(true);
+        mComposer->onHotplugConnect(displayId);
         mDisplays.emplace(displayId, std::move(newDisplay));
     } else if (connection == hal::Connection::DISCONNECTED) {
         // The display will later be destroyed by a call to
@@ -182,7 +184,7 @@ void Device::loadCapabilities()
 
 Error Device::flushCommands()
 {
-    return static_cast<Error>(mComposer->executeCommands());
+    return static_cast<Error>(mComposer->executeCommands(0));
 }
 
 // Display methods
@@ -565,9 +567,6 @@ Error Display::getHdrCapabilities(HdrCapabilities* outCapabilities) const
     if (error != Error::NONE) {
         return error;
     }
-
-    *outCapabilities = HdrCapabilities(std::move(types),
-            maxLuminance, maxAverageLuminance, minLuminance);
     return Error::NONE;
 }
 
@@ -682,12 +681,13 @@ Error Display::setActiveConfig(const std::shared_ptr<const Config>& config)
 }
 
 Error Display::setClientTarget(uint32_t slot, const sp<GraphicBuffer>& target,
-        const sp<Fence>& acquireFence, Dataspace dataspace)
-{
+                               const sp<Fence>& acquireFence, Dataspace dataspace,
+                               float hdrSdrRatio) {
     // TODO: Properly encode client target surface damage
     int32_t fenceFd = acquireFence->dup();
-    auto intError = mComposer.setClientTarget(mId, slot, target,
-            fenceFd, dataspace, std::vector<Hwc2::IComposerClient::Rect>());
+    auto intError =
+            mComposer.setClientTarget(mId, slot, target, fenceFd, dataspace,
+                                      std::vector<Hwc2::IComposerClient::Rect>(), hdrSdrRatio);
     return static_cast<Error>(intError);
 }
 
@@ -753,11 +753,12 @@ Error Display::setVsyncEnabled(Vsync enabled)
     return static_cast<Error>(intError);
 }
 
-Error Display::validate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
+Error Display::validate(nsecs_t expectedPresentTime, int32_t frameIntervalNs, uint32_t* outNumTypes,
                         uint32_t* outNumRequests) {
     uint32_t numTypes = 0;
     uint32_t numRequests = 0;
-    auto intError = mComposer.validateDisplay(mId, expectedPresentTime, &numTypes, &numRequests);
+    auto intError = mComposer.validateDisplay(mId, expectedPresentTime, frameIntervalNs, &numTypes,
+                                              &numRequests);
     auto error = static_cast<Error>(intError);
     if (error != Error::NONE && !hasChangesError(error)) {
         return error;
@@ -768,21 +769,22 @@ Error Display::validate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
     return error;
 }
 
-Error Display::presentOrValidate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
-                                 uint32_t* outNumRequests, sp<android::Fence>* outPresentFence,
-                                 uint32_t* state) {
+Error Display::presentOrValidate(nsecs_t expectedPresentTime, int32_t frameIntervalNs,
+                                 uint32_t* outNumTypes, uint32_t* outNumRequests,
+                                 sp<android::Fence>* outPresentFence, uint32_t* state) {
     uint32_t numTypes = 0;
     uint32_t numRequests = 0;
     int32_t presentFenceFd = -1;
-    auto intError = mComposer.presentOrValidateDisplay(mId, expectedPresentTime, &numTypes,
-                                                       &numRequests, &presentFenceFd, state);
+    auto intError =
+            mComposer.presentOrValidateDisplay(mId, expectedPresentTime, frameIntervalNs, &numTypes,
+                                               &numRequests, &presentFenceFd, state);
     auto error = static_cast<Error>(intError);
     if (error != Error::NONE && !hasChangesError(error)) {
         return error;
     }
 
     if (*state == 1) {
-        *outPresentFence = new Fence(presentFenceFd);
+        *outPresentFence = sp<Fence>::make(presentFenceFd);
     }
 
     if (*state == 0) {
