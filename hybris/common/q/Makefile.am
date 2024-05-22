@@ -41,7 +41,11 @@ q_la_SOURCES = \
 	linker_utils.cpp \
 	rt.cpp \
 	../strlcpy.c \
-	../strlcat.c
+	../strlcat.c \
+	bionic/libc/bionic/bionic_elf_tls.cpp \
+	bionic/libc/bionic/bionic_allocator.cpp \
+	tlsdesc_resolver.S
+
 q_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/include \

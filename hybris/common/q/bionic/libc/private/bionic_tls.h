@@ -108,7 +108,7 @@ class pthread_key_data_t {
 
 // ~3 pages. This struct is allocated as static TLS memory (i.e. at a fixed
 // offset from the thread pointer).
-struct bionic_tls {
+struct bionic_tls {   
   pthread_key_data_t key_data[BIONIC_PTHREAD_KEY_COUNT];
 
   locale_t locale;
@@ -127,6 +127,10 @@ struct bionic_tls {
 
   group_state_t group;
   passwd_state_t passwd;
+
+  char fdtrack_disabled;
+  char bionic_systrace_disabled;
+  char padding[2];
 
   // Initialize the main thread's final object using its bootstrap object.
   void copy_from_bootstrap(const bionic_tls* boot __attribute__((unused))) {
