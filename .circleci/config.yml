@@ -4,15 +4,15 @@ setup: true
 
 orbs:
   continuation: circleci/continuation@0.1.2
-  droidian-buildd: droidian-releng/droidian-buildd-orb@volatile
+  lindroid-buildd: lindroid-releng/lindroid-buildd-orb@volatile
 
 jobs:
   setup:
     executor: continuation/default
     resource_class: small
     steps:
-      - droidian-buildd/checkout
-      - droidian-buildd/generate
+      - lindroid-buildd/checkout
+      - lindroid-buildd/generate
       - continuation/continue:
           configuration_path: generated_config.yml
 
@@ -22,4 +22,4 @@ workflows:
       - setup:
           filters:
             tags:
-              only: /^droidian\/.*\/.*/
+              only: /^lindroid\/.*\/.*/
