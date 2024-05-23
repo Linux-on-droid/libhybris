@@ -127,10 +127,10 @@ public:
 
     // Reset all pending commands in the command buffer. Useful if you want to
     // skip a frame but have already queued some commands.
-    virtual void resetCommands(Display) = 0;
+    virtual void resetCommands() = 0;
 
     // Explicitly flush all pending commands in the command buffer.
-    virtual Error executeCommands(Display) = 0;
+    virtual Error executeCommands() = 0;
 
     virtual uint32_t getMaxVirtualDisplayCount() = 0;
     virtual Error createVirtualDisplay(uint32_t width, uint32_t height, PixelFormat*,
@@ -175,8 +175,7 @@ public:
      */
     virtual Error setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
                                   int acquireFence, Dataspace dataspace,
-                                  const std::vector<IComposerClient::Rect>& damage,
-                                  float hdrSdrRatio) = 0;
+                                  const std::vector<IComposerClient::Rect>& damage) = 0;
     virtual Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) = 0;
     virtual Error setColorTransform(Display display, const float* matrix) = 0;
     virtual Error setOutputBuffer(Display display, const native_handle_t* buffer,
@@ -187,13 +186,11 @@ public:
     virtual Error setClientTargetSlotCount(Display display) = 0;
 
     virtual Error validateDisplay(Display display, nsecs_t expectedPresentTime,
-                                  int32_t frameIntervalNs, uint32_t* outNumTypes,
-                                  uint32_t* outNumRequests) = 0;
+                                  uint32_t* outNumTypes, uint32_t* outNumRequests) = 0;
 
     virtual Error presentOrValidateDisplay(Display display, nsecs_t expectedPresentTime,
-                                           int32_t frameIntervalNs, uint32_t* outNumTypes,
-                                           uint32_t* outNumRequests, int* outPresentFence,
-                                           uint32_t* state) = 0;
+                                           uint32_t* outNumTypes, uint32_t* outNumRequests,
+                                           int* outPresentFence, uint32_t* state) = 0;
 
     virtual Error setCursorPosition(Display display, Layer layer, int32_t x, int32_t y) = 0;
     /* see setClientTarget for the purpose of slot */
@@ -303,8 +300,6 @@ public:
     virtual Error setIdleTimerEnabled(Display displayId, std::chrono::milliseconds timeout) = 0;
     virtual Error getPhysicalDisplayOrientation(Display displayId,
                                                 AidlTransform* outDisplayOrientation) = 0;
-    virtual void onHotplugConnect(Display) = 0;
-    virtual void onHotplugDisconnect(Display) = 0;
 #endif
 };
 

@@ -179,10 +179,10 @@ public:
 
     // Reset all pending commands in the command buffer. Useful if you want to
     // skip a frame but have already queued some commands.
-    void resetCommands(Display) override;
+    void resetCommands() override;
 
     // Explicitly flush all pending commands in the command buffer.
-    Error executeCommands(Display) override;
+    Error executeCommands() override;
 
     uint32_t getMaxVirtualDisplayCount() override;
     Error createVirtualDisplay(uint32_t width, uint32_t height, PixelFormat* format,
@@ -228,8 +228,7 @@ public:
      */
     Error setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
                           int acquireFence, Dataspace dataspace,
-                          const std::vector<IComposerClient::Rect>& damage,
-                          float hdrSdrRatio) override;
+                          const std::vector<IComposerClient::Rect>& damage) override;
     Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) override;
     Error setColorTransform(Display display, const float* matrix) override;
     Error setOutputBuffer(Display display, const native_handle_t* buffer,
@@ -239,13 +238,12 @@ public:
 
     Error setClientTargetSlotCount(Display display) override;
 
-    Error validateDisplay(Display display, nsecs_t expectedPresentTime, int32_t frameIntervalNs,
-                          uint32_t* outNumTypes, uint32_t* outNumRequests) override;
+    Error validateDisplay(Display display, nsecs_t expectedPresentTime, uint32_t* outNumTypes,
+                          uint32_t* outNumRequests) override;
 
     Error presentOrValidateDisplay(Display display, nsecs_t expectedPresentTime,
-                                   int32_t frameIntervalNs, uint32_t* outNumTypes,
-                                   uint32_t* outNumRequests, int* outPresentFence,
-                                   uint32_t* state) override;
+                                   uint32_t* outNumTypes, uint32_t* outNumRequests,
+                                   int* outPresentFence, uint32_t* state) override;
 
     Error setCursorPosition(Display display, Layer layer, int32_t x, int32_t y) override;
     /* see setClientTarget for the purpose of slot */
@@ -342,8 +340,6 @@ public:
 
     Error getPhysicalDisplayOrientation(Display displayId,
                                         AidlTransform* outDisplayOrientation) override;
-    void onHotplugConnect(Display) override;
-    void onHotplugDisconnect(Display) override;
 #endif
 
 private:

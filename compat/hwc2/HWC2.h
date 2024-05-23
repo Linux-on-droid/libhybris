@@ -65,16 +65,12 @@ class Layer;
 
 namespace hal = android::hardware::graphics::composer::hal;
 
-using aidl::android::hardware::graphics::common::DisplayHotplugEvent;
-using aidl::android::hardware::graphics::composer3::RefreshRateChangedDebugData;
-
 // Implement this interface to receive hardware composer events.
 //
 // These callback functions will generally be called on a hwbinder thread, but
 // when first registering the callback the onComposerHalHotplug() function will
 // immediately be called on the thread calling registerCallback().
 struct ComposerCallback {
-    virtual void onComposerHalHotplugEvent(hal::HWDisplayId, DisplayHotplugEvent) = 0;
     virtual void onComposerHalHotplug(hal::HWDisplayId, hal::Connection) = 0;
     virtual void onComposerHalRefresh(hal::HWDisplayId) = 0;
     virtual void onComposerHalVsync(hal::HWDisplayId, int64_t timestamp,
@@ -83,7 +79,6 @@ struct ComposerCallback {
                                                        const hal::VsyncPeriodChangeTimeline&) = 0;
     virtual void onComposerHalSeamlessPossible(hal::HWDisplayId) = 0;
     virtual void onComposerHalVsyncIdle(hal::HWDisplayId) = 0;
-    virtual void onRefreshRateChangedDebug(const RefreshRateChangedDebugData&) = 0;
 
 protected:
     ~ComposerCallback() = default;
@@ -270,8 +265,7 @@ public:
             const std::shared_ptr<const Config>& config) = 0;
     [[nodiscard]] virtual hal::Error setClientTarget(
             uint32_t slot, const android::sp<android::GraphicBuffer>& target,
-            const android::sp<android::Fence>& acquireFence, hal::Dataspace dataspace,
-            float hdrSdrRatio) = 0;
+            const android::sp<android::Fence>& acquireFence, hal::Dataspace dataspace) = 0;
     [[nodiscard]] virtual hal::Error setColorMode(hal::ColorMode mode,
                                                   hal::RenderIntent renderIntent) = 0;
     [[nodiscard]] virtual hal::Error setColorTransform(const android::mat4& matrix) = 0;
@@ -280,10 +274,9 @@ public:
             const android::sp<android::Fence>& releaseFence) = 0;
     [[nodiscard]] virtual hal::Error setPowerMode(hal::PowerMode mode) = 0;
     [[nodiscard]] virtual hal::Error setVsyncEnabled(hal::Vsync enabled) = 0;
-    [[nodiscard]] virtual hal::Error validate(nsecs_t expectedPresentTime, int32_t frameIntervalNs,
-                                              uint32_t* outNumTypes, uint32_t* outNumRequests) = 0;
+    [[nodiscard]] virtual hal::Error validate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
+                                              uint32_t* outNumRequests) = 0;
     [[nodiscard]] virtual hal::Error presentOrValidate(nsecs_t expectedPresentTime,
-                                                       int32_t frameIntervalNs,
                                                        uint32_t* outNumTypes,
                                                        uint32_t* outNumRequests,
                                                        android::sp<android::Fence>* outPresentFence,
@@ -373,17 +366,17 @@ public:
     hal::Error setActiveConfig(const std::shared_ptr<const HWC2::Display::Config>& config) override;
     hal::Error setClientTarget(uint32_t slot, const android::sp<android::GraphicBuffer>& target,
                                const android::sp<android::Fence>& acquireFence,
-                               hal::Dataspace dataspace, float hdrSdrRatio) override;
+                               hal::Dataspace dataspace) override;
     hal::Error setColorMode(hal::ColorMode, hal::RenderIntent) override;
     hal::Error setColorTransform(const android::mat4& matrix) override;
     hal::Error setOutputBuffer(const android::sp<android::GraphicBuffer>&,
                                const android::sp<android::Fence>& releaseFence) override;
     hal::Error setPowerMode(hal::PowerMode) override;
     hal::Error setVsyncEnabled(hal::Vsync enabled) override;
-    hal::Error validate(nsecs_t expectedPresentTime, int32_t frameIntervalNs, uint32_t* outNumTypes,
+    hal::Error validate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
                         uint32_t* outNumRequests) override;
-    hal::Error presentOrValidate(nsecs_t expectedPresentTime, int32_t frameIntervalNs,
-                                 uint32_t* outNumTypes, uint32_t* outNumRequests,
+    hal::Error presentOrValidate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
+                                 uint32_t* outNumRequests,
                                  android::sp<android::Fence>* outPresentFence,
                                  uint32_t* state) override;
 #if ANDROID_VERSION_MAJOR >= 13

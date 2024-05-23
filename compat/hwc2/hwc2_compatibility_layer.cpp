@@ -49,8 +49,7 @@ public:
                             std::optional<hal::VsyncPeriodNanos>) {
         listener->on_vsync_received(listener, 0, display, timestamp);
     }
-    void onComposerHalHotplugEvent(hal::HWDisplayId, android::HWC2::DisplayHotplugEvent) { }
-    void onRefreshRateChangedDebug(const android::HWC2::RefreshRateChangedDebugData&) { }
+
     void onComposerHalVsyncPeriodTimingChanged(hal::HWDisplayId,
                                                const hal::VsyncPeriodChangeTimeline&) { }
 
@@ -246,7 +245,7 @@ hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* displa
             new android::Fence(acquireFenceFd));
 
     hal::Error error = display->self->setClientTarget(0, target,
-                                        acquireFence, hal::Dataspace::UNKNOWN, 0);
+                                        acquireFence, hal::Dataspace::UNKNOWN);
 
     return static_cast<hwc2_error_t>(error);
 }
@@ -272,7 +271,7 @@ hwc2_error_t hwc2_compat_display_validate(hwc2_compat_display_t* display,
                                  uint32_t* outNumRequests)
 {
     const int expectedPresentTime = 0;
-    hal::Error error = display->self->validate(expectedPresentTime, 0, outNumTypes, outNumRequests);
+    hal::Error error = display->self->validate(expectedPresentTime, outNumTypes, outNumRequests);
     return static_cast<hwc2_error_t>(error);
 }
 
