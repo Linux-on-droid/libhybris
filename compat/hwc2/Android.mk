@@ -17,7 +17,7 @@ endif
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libhwc2_compat_layer
+LOCAL_MODULE := libhwc2_compat_layer_org
 LOCAL_SRC_FILES := HWC2.cpp HidlComposerHal.cpp ComposerHal.cpp hwc2_compatibility_layer.cpp
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../hybris/include

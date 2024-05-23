@@ -1,0 +1,24 @@
+cc_library_shared {
+    name: "libhwc2_compat_layer",
+    srcs: [
+        "hwc2_compatibility_layer.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libutils",
+        "liblog",
+        "libui",
+        "libnativewindow",
+        "libhardware",
+        "vendor.lindroid.composer-ndk",
+    ],
+    static_libs: [
+        "libaidlcommonsupport",
+    ],
+    cppflags: [
+        "-Wno-unused-parameter",
+        "-Wno-unused-variable",
+    ],
+}
