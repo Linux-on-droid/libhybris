@@ -93,10 +93,10 @@ hwc2_compat_device_t* hwc2_compat_device_new(bool useVrComposer)
 
 void hwc2_compat_device_register_callback(hwc2_compat_device_t *device,
                                           HWC2EventListener* listener,
-                                          int composerSequenceId /*unused*/)
+                                          int composerSequenceId)
 {
     device->listener = ndk::SharedRefBase::make<ComposerCallbackImpl>(listener);
-    device->self->registerCallback(device->listener);
+    device->self->registerCallback(device->listener, composerSequenceId);
 }
 
 void hwc2_compat_device_on_hotplug(hwc2_compat_device_t* device,
