@@ -12,6 +12,7 @@
 #include <aidlcommonsupport/NativeHandle.h>
 
 #include <android/binder_manager.h>
+#include <android/binder_process.h>
 
 namespace aidl {
 namespace vendor {
@@ -84,6 +85,8 @@ hwc2_compat_device_t* hwc2_compat_device_new(bool useVrComposer)
     hwc2_compat_device_t *device = new hwc2_compat_device_t();
     if (!device)
         return nullptr;
+
+    ABinderProcess_startThreadPool();
 
     ndk::SpAIBinder binder(AServiceManager_waitForService("vendor.lindroid.composer"));
     device->self = IComposer::fromBinder(binder);
