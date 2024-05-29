@@ -221,14 +221,14 @@ hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* displa
 hwc2_error_t hwc2_compat_display_set_power_mode(hwc2_compat_display_t* display,
                                         int mode)
 {
-    display->device->self->setPowerMode(mode);
+    display->device->self->setPowerMode(static_cast<int64_t>(display->id), mode);
     return HWC2_ERROR_NONE;
 }
 
 hwc2_error_t hwc2_compat_display_set_vsync_enabled(hwc2_compat_display_t* display,
                                            int enabled)
 {
-    display->device->self->setVsyncEnabled(enabled);
+    display->device->self->setVsyncEnabled(static_cast<int64_t>(display->id), enabled);
     return HWC2_ERROR_NONE;
 }
 
