@@ -43,6 +43,10 @@
 #include "platform/bionic/page.h"
 #include "platform/bionic/macros.h"
 
+#ifndef PR_SET_VMA
+#define PR_SET_VMA            0x53564d41
+#define PR_SET_VMA_ANON_NAME  0
+#endif
 
 #define __BIONIC_ALIGN(__value, __alignment) (((__value) + (__alignment)-1) & ~((__alignment)-1))
 //

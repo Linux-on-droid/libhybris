@@ -43,8 +43,12 @@ q_la_SOURCES = \
 	../strlcpy.c \
 	../strlcat.c \
 	bionic/libc/bionic/bionic_elf_tls.cpp \
-	bionic/libc/bionic/bionic_allocator.cpp \
+	bionic/libc/bionic/bionic_allocator.cpp
+
+if WANT_ARCH_ARM64
+q_la_SOURCES += \
 	tlsdesc_resolver.S
+endif
 
 q_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
@@ -78,4 +82,3 @@ if WANT_ARM_TRACING
 q_la_CPPFLAGS += \
 	-DWANT_ARM_TRACING
 endif
-
