@@ -1,3 +1,4 @@
+usr/bin/test_vulkan
 usr/bin/test_hwcomposer
 usr/bin/test_egl
 usr/bin/test_egl_configs
