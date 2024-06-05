@@ -33,7 +33,7 @@ public:
         return ndk::ScopedAStatus::ok();
     }
 
-    ndk::ScopedAStatus onRefreshReceived(int32_t in_sequenceId, int64_t in_display, int64_t /* in_timestamp */) {
+    ndk::ScopedAStatus onRefreshReceived(int32_t in_sequenceId, int64_t in_display) {
         listener->on_refresh_received(listener, in_sequenceId, static_cast<hwc2_display_t>(in_display));
         return ndk::ScopedAStatus::ok();
     }
