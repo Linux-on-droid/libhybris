@@ -216,7 +216,8 @@ hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* displa
         .handle = dupToAidl(buffer->handle),
     };
 
-    display->device->self->setBuffer(static_cast<int64_t>(display->id), out, acquireFenceFd, &error);
+    ndk::ScopedFileDescriptor acquireFence(acquireFenceFd);
+    display->device->self->setBuffer(static_cast<int64_t>(display->id), out, acquireFence, &error);
 
     return static_cast<hwc2_error_t>(error);
 }
@@ -263,7 +264,8 @@ hwc2_error_t hwc2_compat_layer_set_buffer(hwc2_compat_layer_t* layer,
         .handle = dupToAidl(buffer->handle),
     };
 
-    layer->display->device->self->setBuffer(static_cast<int64_t>(layer->display->id), out, acquireFenceFd, &error);
+    ndk::ScopedFileDescriptor acquireFence(acquireFenceFd);
+    layer->display->device->self->setBuffer(static_cast<int64_t>(layer->display->id), out, acquireFence, &error);
     return static_cast<hwc2_error_t>(error);
 }
 
