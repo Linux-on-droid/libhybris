@@ -113,6 +113,7 @@ static const char* const kLdGeneratedConfigFilePath = "/linkerconfig/ld.config.t
 
 #if defined(__LP64__)
 static const char* const kSystemLibDir        = "/system/lib64";
+static const char* const kSystemExtLibDir     = "/system_ext/lib64";
 static const char* const kOdmLibDir           = "/odm/lib64";
 static const char* const kVendorLibDir        = "/vendor/lib64";
 static const char* const kAsanSystemLibDir    = "/data/asan/system/lib64";
@@ -121,6 +122,7 @@ static const char* const kAsanVendorLibDir    = "/data/asan/vendor/lib64";
 static const char* const kRuntimeApexLibDir   = "/apex/com.android.runtime/lib64";
 #else
 static const char* const kSystemLibDir        = "/system/lib";
+static const char* const kSystemExtLibDir     = "/system_ext/lib";
 static const char* const kOdmLibDir           = "/odm/lib";
 static const char* const kVendorLibDir        = "/vendor/lib";
 static const char* const kAsanSystemLibDir    = "/data/asan/system/lib";
@@ -133,6 +135,7 @@ static const char* const kAsanLibDirPrefix = "/data/asan";
 
 static const char* const kDefaultLdPaths[] = {
   kSystemLibDir,
+  kSystemExtLibDir,
   kOdmLibDir,
   kVendorLibDir,
   nullptr
@@ -141,6 +144,7 @@ static const char* const kDefaultLdPaths[] = {
 static const char* const kAsanDefaultLdPaths[] = {
   kAsanSystemLibDir,
   kSystemLibDir,
+  kSystemExtLibDir,
   kAsanOdmLibDir,
   kOdmLibDir,
   kAsanVendorLibDir,
