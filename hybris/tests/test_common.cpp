@@ -361,29 +361,7 @@ HWComposer *create_hwcomposer1_window()
 
 HWComposer *create_hwcomposer_window()
 {
-#if HAS_HWCOMPOSER2_HEADERS
-	int err;
-	hw_module_t *hwcModule = 0;
-	hwc_composer_device_1_t *hwcDevicePtr = 0;
-
-	err = hw_get_module(HWC_HARDWARE_MODULE_ID, (const hw_module_t **) &hwcModule);
-	assert(err == 0);
-
-	err = hwc_open_1(hwcModule, &hwcDevicePtr);
-	assert(err == 0);
-
-	hw_device_t *hwcDevice = &hwcDevicePtr->common;
-
-	uint32_t hwc_version = interpreted_version(hwcDevice);
-
-	hwc_close_1(hwcDevicePtr);
-	if (hwc_version == HWC_DEVICE_API_VERSION_2_0) {
-		return create_hwcomposer2_window();
-	} else
-#endif
-	{
-		return create_hwcomposer1_window();
-	}
+	return create_hwcomposer2_window();
 }
 
 #endif
