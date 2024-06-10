@@ -117,6 +117,7 @@ hwc2_compat_display_t* hwc2_compat_device_get_display_by_id(
         return nullptr;
 
     display->device = device;
+    display->id = id;
 
     device->self->requestDisplay(static_cast<int64_t>(id));
 
