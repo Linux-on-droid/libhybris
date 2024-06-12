@@ -117,6 +117,7 @@ static const char* const kSystemExtLibDir     = "/system_ext/lib64";
 static const char* const kOdmLibDir           = "/odm/lib64";
 static const char* const kVendorLibDir        = "/vendor/lib64";
 static const char* const kVendorEglLibDir     = "/vendor/lib64/egl";
+static const char* const kVendorHwLibDir      = "/vendor/lib64/hw";
 static const char* const kProductLibDir       = "/product/lib64";
 static const char* const kAsanSystemLibDir    = "/data/asan/system/lib64";
 static const char* const kAsanOdmLibDir       = "/data/asan/odm/lib64";
@@ -128,6 +129,7 @@ static const char* const kSystemExtLibDir     = "/system_ext/lib";
 static const char* const kOdmLibDir           = "/odm/lib";
 static const char* const kVendorLibDir        = "/vendor/lib";
 static const char* const kVendorEglLibDir     = "/vendor/lib/egl";
+static const char* const kVendorHwLibDir      = "/vendor/lib/hw";
 static const char* const kProductLibDir       = "/product/lib";
 static const char* const kAsanSystemLibDir    = "/data/asan/system/lib";
 static const char* const kAsanOdmLibDir       = "/data/asan/odm/lib";
@@ -143,6 +145,7 @@ static const char* const kDefaultLdPaths[] = {
   kOdmLibDir,
   kVendorLibDir,
   kVendorEglLibDir,
+  kVendorHwLibDir,
   kProductLibDir,
   nullptr
 };
@@ -156,6 +159,7 @@ static const char* const kAsanDefaultLdPaths[] = {
   kAsanVendorLibDir,
   kVendorLibDir,
   kVendorEglLibDir,
+  kVendorHwLibDir,
   kProductLibDir,
   nullptr
 };
