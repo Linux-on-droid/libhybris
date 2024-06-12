@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+configure() {
+	TRIPLET=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
+	if [ -e "/usr/lib/${TRIPLET}/libvulkan-hybris.so" ]; then
+		ln -sf /usr/lib/${TRIPLET}/libvulkan-hybris.so /usr/lib/${TRIPLET}/libvulkan.so.1
+	fi
+}
+
+case "$1" in
+	"configure")
+		configure
+		;;
+esac

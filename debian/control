@@ -176,3 +176,12 @@ Description: libhybris extension for the org.freedesktop.Platform.GL runtime
  This allows usage of libhybris inside flatpaks as well. Note that installing
  this package won't enable the extension automatically.
  Check the flatpak-hybris package for more details.
+
+Package: libhybris-vulkan
+Architecture: amd64 arm64 armhf i386
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: libvulkan1
+Replaces: libvulkan1
+Description: library to provide access to Android vulkan HAL
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.

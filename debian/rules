@@ -14,6 +14,8 @@ PKG_driver      := libhybris
 
 export DEB_HOST_MULTIARCH=$(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
+export VULKAN_VERSION="1.2.183"
+
 # Strong needs at least gcc 4.9
 export DEB_BUILD_MAINT_OPTIONS=hardening=-stackprotectorstrong
 
@@ -99,6 +101,12 @@ override_dh_install:
 
 	# Strip recent glibc symbols on the flatpak extension
 	find $(CURDIR)/debian/flatpak-extension-gl-hybris/$(FLATPAK_EXTENSION_TARGET)/$(FLATPAK_LIBDIR) -type f -name \*.so\* -exec glibc-downgrade $(GLIBC_LAST_SUPPORTED_VERSION) \{\} \;
+
+	# libvulkan.so is a symlink provided by libvulkan-dev which points to libvulkan.so.1.* (which we also provide)
+	# by getting rid of it from this package we can avoid a dumb conflict with libvulkan-dev and not do a diversion
+	rm -f $(CURDIR)/debian/libhybris-vulkan/$(libdir)/libvulkan.la $(CURDIR)/debian/libhybris-vulkan/$(libdir)/libvulkan.so $(CURDIR)/debian/libhybris-vulkan/$(libdir)/libvulkan.so.1
+
+	ln -s libvulkan.so.$(VULKAN_VERSION) $(CURDIR)/debian/libhybris-vulkan/$(libdir)/libvulkan-hybris.so
 
 override_dh_shlibdeps:
 	dh_shlibdeps -l"$(CURDIR)/debian/$(PKG_driver)/$(PKG_libdir)"
