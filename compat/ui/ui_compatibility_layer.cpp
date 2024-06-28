@@ -212,8 +212,13 @@ status_t graphic_buffer_mapper_lock(buffer_handle_t handle, uint32_t usage, cons
                                    void** vaddr, int32_t* outBytesPerPixel,
                                    int32_t* outBytesPerStride) {
     auto rect = android::Rect(bounds->left, bounds->top, bounds->right, bounds->bottom);
-    return GraphicBufferMapper::getInstance().lock(handle, usage, rect,
-                                                   vaddr, outBytesPerPixel, outBytesPerStride);
+    auto result = GraphicBufferMapper::getInstance().lock(handle, usage, rect);
+    if (!result.has_value()) return result.asStatus();
+    auto val = result.value();
+    *vaddr = val.address;
+    *outBytesPerPixel = val.bytesPerPixel;
+    *outBytesPerStride = val.bytesPerStride;
+    return android::OK;
 }
 
 status_t graphic_buffer_mapper_unlock(buffer_handle_t handle)
