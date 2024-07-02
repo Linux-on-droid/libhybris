@@ -97,7 +97,7 @@ __eglGLVNDGetVendorString(int name)
 {
     if (name == __EGL_VENDOR_STRING_PLATFORM_EXTENSIONS) {
         return
-            "EGL_KHR_platform_android"
+            "EGL_KHR_platform_android EGL_EXT_platform_x11 EGL_KHR_platform_x11"
 #ifdef WANT_WAYLAND
             " EGL_EXT_platform_wayland EGL_KHR_platform_wayland"
 #endif
