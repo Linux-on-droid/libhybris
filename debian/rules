@@ -78,7 +78,7 @@ ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), amd64))
 FLATPAK_ARCH = x86_64
 FLATPAK_LIBDIR = lib64
 ARCH_CONFIGURATION = \
-	--enable-arch=x86
+	--enable-arch=x86-64
 endif
 
 FLATPAK_EXTENSION_TARGET = var/lib/flatpak/extension/org.freedesktop.Platform.GL.hybris/$(FLATPAK_ARCH)/1.4
