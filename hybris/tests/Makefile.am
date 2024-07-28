@@ -389,7 +389,25 @@ test_opencl_CFLAGS += -DLIBHYBRIS_WANTS_CLICD
 endif
 
 if WANT_WAYLAND
-test_vulkan_SOURCES = test_vulkan.cpp
+.SECONDEXPANSION:
+define protostability
+$(if $(findstring unstable,$1),unstable,stable)
+endef
+define protoname
+$(shell echo $1 | $(SED) 's/\([a-z\-]\+\)-[a-z]\+-v[0-9]\+/\1/')
+endef
+
+%-client-protocol.h : $(WAYLAND_PROTOCOLS_DATADIR)/$$(call protostability,$$*)/$$(call protoname,$$*)/$$*.xml
+	$(AM_V_GEN)$(WAYLAND_SCANNER) client-header < $< > $@
+%-protocol.c : $(WAYLAND_PROTOCOLS_DATADIR)/$$(call protostability,$$*)/$$(call protoname,$$*)/$$*.xml
+	$(AM_V_GEN)$(WAYLAND_SCANNER) private-code < $< > $@
+
+BUILT_SOURCES = xdg-shell-protocol.c xdg-shell-client-protocol.h
+
+test_vulkan_SOURCES = \
+	test_vulkan.cpp \
+	xdg-shell-protocol.c \
+	xdg-shell-client-protocol.h
 test_vulkan_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)

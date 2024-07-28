@@ -26,6 +26,8 @@
 #include <wayland-client-protocol.h>
 #include <wayland-server.h>
 
+#include "xdg-shell-client-protocol.h"
+
 #define VK_USE_PLATFORM_WAYLAND_KHR 1
 #include <vulkan/vulkan.h>
 
@@ -61,6 +63,9 @@ struct wl_data {
     struct wl_shell *wlshell;
     struct wl_shell_surface *wlshell_surface;
     struct wl_output *wloutput;
+    struct xdg_wm_base *wm_base;
+    struct xdg_surface *xdg_surface;
+    struct xdg_toplevel *xdg_toplevel;
     uint32_t width;
     uint32_t height;
 } wl_data;
@@ -118,6 +123,16 @@ static const struct wl_output_listener output_listener = {
     display_handle_scale
 };
 
+static void
+xdg_wm_base_ping(void *, struct xdg_wm_base *wm_base, uint32_t serial)
+{
+    xdg_wm_base_pong(wm_base, serial);
+}
+
+static const struct xdg_wm_base_listener xdg_wm_base_listener = {
+    xdg_wm_base_ping,
+};
+
 static void global_registry_handler(void *data, struct wl_registry *registry,
                                     uint32_t id, const char *interface, uint32_t version)
 {
@@ -128,6 +143,9 @@ static void global_registry_handler(void *data, struct wl_registry *registry,
     } else if (strcmp(interface, "wl_output") == 0) {
         wl_data.wloutput = (wl_output *)wl_registry_bind(registry, id, &wl_output_interface, 2);
         wl_output_add_listener(wl_data.wloutput, &output_listener, &wl_data);
+    } else if (strcmp(interface, "xdg_wm_base") == 0) {
+        wl_data.wm_base = (xdg_wm_base *)wl_registry_bind(registry, id, &xdg_wm_base_interface, 1);
+        xdg_wm_base_add_listener(wl_data.wm_base, &xdg_wm_base_listener, &wl_data);
     }
 }
 
@@ -154,7 +172,7 @@ static void get_server_references(void)
     wl_display_dispatch(wl_data.wldisplay);
     wl_display_roundtrip(wl_data.wldisplay);
 
-    if (wl_data.wlcompositor == NULL || wl_data.wlshell == NULL) {
+    if (wl_data.wlcompositor == NULL || (wl_data.wlshell == NULL && wl_data.wm_base == NULL)) {
         fprintf(stderr, "Failed to find compositor or shell\n");
         exit(1);
     }
@@ -473,11 +491,18 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    wl_data.wlshell_surface = wl_shell_get_shell_surface(wl_data.wlshell, wl_data.wlsurface);
-    wl_shell_surface_add_listener(wl_data.wlshell_surface, &shell_surface_listener, &wl_data);
-    wl_shell_surface_set_class(wl_data.wlshell_surface, "test");
-    wl_shell_surface_set_title(wl_data.wlshell_surface, "test_vulkan");
-    wl_shell_surface_set_toplevel(wl_data.wlshell_surface);
+    if (wl_data.wm_base == NULL) {
+        wl_data.wlshell_surface = wl_shell_get_shell_surface(wl_data.wlshell, wl_data.wlsurface);
+        wl_shell_surface_add_listener(wl_data.wlshell_surface, &shell_surface_listener, &wl_data);
+        wl_shell_surface_set_class(wl_data.wlshell_surface, "test");
+        wl_shell_surface_set_title(wl_data.wlshell_surface, "test_vulkan");
+        wl_shell_surface_set_toplevel(wl_data.wlshell_surface);
+    } else {
+        wl_data.xdg_surface = xdg_wm_base_get_xdg_surface(wl_data.wm_base, wl_data.wlsurface);
+        wl_data.xdg_toplevel = xdg_surface_get_toplevel(wl_data.xdg_surface);
+        xdg_toplevel_set_app_id(wl_data.xdg_toplevel, "test_vulkan");
+        xdg_toplevel_set_title(wl_data.xdg_toplevel, "test_vulkan");
+    }
 
     wl_data.wlregion = wl_compositor_create_region(wl_data.wlcompositor);
     wl_region_add(wl_data.wlregion, 0, 0, wl_data.width, wl_data.height);

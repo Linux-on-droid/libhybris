@@ -10,13 +10,14 @@ Build-Depends: android-headers,
                libxcb-present-dev,
                libxext-dev,
                libvulkan-dev,
-	       dh-exec,
+               dh-exec,
                pkg-config,
                libglvnd-dev,
                binutils,
                patchelf,
                python3,
                glibc-downgrade,
+               wayland-protocols,
                quilt
 Standards-Version: 4.4.1
 Section: libs

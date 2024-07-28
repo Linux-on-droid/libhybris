@@ -84,10 +84,12 @@ AC_ARG_ENABLE(wayland,
   [wayland=$enableval
 	PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client,, exit)
 	PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server,, exit)
+	PKG_CHECK_MODULES(WAYLAND_PROTOCOLS, wayland-protocols,, exit)
 	PKG_CHECK_MODULES(WAYLAND_EGL, [wayland-egl >= 1.15],, exit)
 	WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`
 
 	AC_PATH_PROG([WAYLAND_SCANNER], [wayland-scanner],, [${WAYLAND_PREFIX}/bin$PATH_SEPARATOR$PATH])
+	AC_SUBST(WAYLAND_PROTOCOLS_DATADIR, `$PKG_CONFIG --variable=pkgdatadir wayland-protocols`)
 	AC_DEFINE(WANT_WAYLAND, [], [We want Wayland support])
 ],
   [wayland="no"])
