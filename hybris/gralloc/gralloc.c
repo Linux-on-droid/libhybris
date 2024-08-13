@@ -97,9 +97,13 @@ static void gralloc1_init(void);
 #endif
 
 #if ANDROID_VERSION_MAJOR>=10
-#define GRALLOC_COMPAT(code) (version == 2) { code }
+#define GRALLOC_COMPAT(code) (version == -1) \
+    { hybris_gralloc_initialize(0); } \
+    if (version == 2) { code }
 #else
-#define GRALLOC_COMPAT(code) (0) {}
+#define GRALLOC_COMPAT(code) (version == -1) \
+    { hybris_gralloc_initialize(0); } \
+    if (0) {}
 #endif
 
 #define NO_GRALLOC { fprintf(stderr, "%s:%d: called gralloc method without gralloc loaded\n", __func__, __LINE__); assert(NULL); }
