@@ -2072,8 +2072,14 @@ static int _hybris_hook_scandirat(int fd, const char *dir,
 
             result[nItems++] = filter_r;
         }
+        int bionic_compare(const void *a1, const void *b1)
+        {
+            const struct bionic_dirent **a = (const struct bionic_dirent **)a1;
+            const struct bionic_dirent **b = (const struct bionic_dirent **)b1;
+            return compar (a, b);
+        }
         if (nItems && compar != NULL) // sort
-            qsort(result, nItems, sizeof(struct bionic_dirent *), compar);
+            qsort(result, nItems, sizeof(struct bionic_dirent *), bionic_compare);
 
         *namelist = result;
     }
