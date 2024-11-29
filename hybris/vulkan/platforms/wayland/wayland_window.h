@@ -159,7 +159,7 @@ public:
     static void resize_callback(struct wl_egl_window *egl_window, void *);
     static void destroy_window_callback(void *data);
     struct wl_event_queue *wl_queue;
-
+    virtual unsigned int getUsage() const;
 protected:
     // overloads from BaseNativeWindow
     virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd);
@@ -174,7 +174,7 @@ protected:
     virtual unsigned int defaultHeight() const;
     virtual unsigned int queueLength() const;
     virtual unsigned int transformHint() const;
-    virtual unsigned int getUsage() const;
+//    virtual unsigned int getUsage() const;
     // perform calls
     virtual int setUsage(uint64_t usage);
     virtual int setBuffersFormat(int format);

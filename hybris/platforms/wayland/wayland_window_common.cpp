@@ -475,16 +475,18 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
     wnb = new ClientWaylandBuffer(m_width, m_height, m_format, m_usage);
 #endif
     m_bufList.push_back(wnb);
+if(m_freeBufs<0)
+    m_freeBufs=0;
     ++m_freeBufs;
 
-    TRACE("wnb:%p width:%i height:%i format:x%x usage:x%x",
-         wnb, wnb->width, wnb->height, wnb->format, wnb->usage);
+    TRACE("wnb:%p width:%i height:%i format:x%x usage:x%x m_freeBufs:%d",
+         wnb, wnb->width, wnb->height, wnb->format, wnb->usage, m_freeBufs);
 
     return wnb;
 }
 
 
-int WaylandNativeWindow::setBufferCount(int cnt) {
+/*int WaylandNativeWindow::setBufferCount(int cnt) {
     TRACE("cnt:%d", cnt);
 
     if ((int)m_bufList.size() == cnt)
@@ -492,9 +494,9 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
     lock();
 
-    if ((int)m_bufList.size() > cnt) {
+    if ((int)m_bufList.size() > cnt) {*/
         /* Decreasing buffer count, remove from beginning */
-        std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
+ /*       std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
         for (int i = 0; i <= (int)m_bufList.size() - cnt; i++ )
         {
             destroyBuffer(*it);
@@ -502,9 +504,9 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
             m_bufList.pop_front();
         }
 
-    } else {
+     } else {*/
         /* Increasing buffer count, start from current size */
-        for (int i = (int)m_bufList.size(); i < cnt; i++)
+        /*for (int i = (int)m_bufList.size(); i < cnt; i++)
             (void)addBuffer();
 
     }
@@ -512,9 +514,40 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
     unlock();
 
     return NO_ERROR;
+}*/
+
+int WaylandNativeWindow::setBufferCount(int cnt) {
+    TRACE("cnt:%d", cnt);
+
+    lock();
+
+    if (cnt == 0) {
+        // Destroy all buffers regardless of their status
+        TRACE("Destroying all buffers since count is 0");
+        for (auto it = m_bufList.begin(); it != m_bufList.end(); ) {
+            destroyBuffer(*it);
+            it = m_bufList.erase(it); // Remove from list and advance iterator
+        }
+    } else if ((int)m_bufList.size() > cnt) {
+        // Decreasing buffer count, remove from beginning
+        TRACE("Decreasing buffer count to %d", cnt);
+        auto it = m_bufList.begin();
+        for (int i = 0; i < (int)m_bufList.size() - cnt; i++) {
+            destroyBuffer(*it);
+            it = m_bufList.erase(it); // Remove from list and advance iterator
+        }
+    } else if ((int)m_bufList.size() < cnt) {
+        // Increasing buffer count, add new buffers
+        TRACE("Increasing buffer count from %d to %d", (int)m_bufList.size(), cnt);
+        for (int i = (int)m_bufList.size(); i < cnt; i++) {
+            addBuffer();
+        }
+    }
+
+    unlock();
+
+    return NO_ERROR;
 }
-
-
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {

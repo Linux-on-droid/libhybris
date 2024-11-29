@@ -430,6 +430,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		break;
 	case NATIVE_WINDOW_API_DISCONNECT            : // 14,   /* private */
 		TRACE("api disconnect");
+		return self->setBufferCount(0);
 		break;
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=5
 	case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS : // 15, /* private */

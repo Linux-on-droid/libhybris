@@ -25,6 +25,8 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <inttypes.h>
 
 #include <hybris/common/binding.h>
 #include <hybris/common/floating_point_abi.h>
@@ -34,6 +36,7 @@
 
 static void *vulkan_handle = NULL;
 
+bool creation = false;
 /*
  * This generates a function that when first called overwrites it's plt entry with new address.
  * Subsequent calls jump directly at the target function in the android library.
@@ -104,6 +107,107 @@ VkResult vkEnumerateInstanceExtensionProperties(const char* pLayerName, uint32_t
     return ws_vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties);
 }
 
+static VkResult (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice pdev, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR* capabilities) = NULL;
+
+VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice pdev, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR* capabilities)
+{
+    VkResult result;
+    if (_vkGetPhysicalDeviceSurfaceCapabilitiesKHR == NULL) {
+  //      _vkGetPhysicalDeviceSurfaceCapabilitiesKHR = (VkResult (*)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *))
+    //        (*_vkGetInstanceProcAddr)(instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+        HYBRIS_DLSYSM(vulkan, &_vkGetPhysicalDeviceSurfaceCapabilitiesKHR, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+    }
+//printf("vkGetPhysicalDeviceSurfaceCapabilitiesKHR: hi\n");
+    result = (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(pdev, surface, capabilities);
+    if(result == VK_SUCCESS) {
+        capabilities->currentExtent.width = 0xFFFFFFFF;
+        capabilities->currentExtent.height = 0xFFFFFFFF;
+    }
+    return result;
+}
+
+static VkResult (*_vkCreateSwapchainKHR)(VkDevice device, const VkSwapchainCreateInfoKHR* create_info, const VkAllocationCallbacks* allocator, VkSwapchainKHR* swapchain_handle) = NULL;
+bool rendering = true;
+VkResult vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR* create_info, const VkAllocationCallbacks* allocator, VkSwapchainKHR* swapchain_handle)
+{
+    VkResult result;
+    if (_vkCreateSwapchainKHR == NULL) {
+  //      _vkGetPhysicalDeviceSurfaceCapabilitiesKHR = (VkResult (*)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *))
+    //        (*_vkGetInstanceProcAddr)(instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+        HYBRIS_DLSYSM(vulkan, &_vkCreateSwapchainKHR, "vkCreateSwapchainKHR");
+    }
+//creation=true;
+//TRACE("going to vkCreateSwapchainKHR");
+//usleep(5000000);
+result = (*_vkCreateSwapchainKHR)(device, create_info, allocator, swapchain_handle);
+//TRACE("vkCreateSwapchainKHR done");
+//creation=false;
+return result;
+}
+
+static VkResult (*_vkQueuePresentKHR)(VkQueue queue, const VkPresentInfoKHR* present_info) = NULL;
+
+VkResult vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR* present_info)
+{
+    VkResult result;
+    if (_vkQueuePresentKHR == NULL) {
+  //      _vkGetPhysicalDeviceSurfaceCapabilitiesKHR = (VkResult (*)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *))
+    //        (*_vkGetInstanceProcAddr)(instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+        HYBRIS_DLSYSM(vulkan, &_vkQueuePresentKHR, "vkQueuePresentKHR");
+    }
+//printf("vkQueuePresentKHR: hi\n");
+//while(creation);
+//TRACE("kQueuePresentKHR: %d", creation);
+    result = (*_vkQueuePresentKHR)(queue, present_info);
+    return result;
+}
+
+static VkResult (*_vkAcquireNextImageKHR)(VkDevice device, VkSwapchainKHR swapchain_handle, uint64_t timeout, VkSemaphore semaphore, VkFence vk_fence, uint32_t* image_index) = NULL;
+
+VkResult vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain_handle, uint64_t timeout, VkSemaphore semaphore, VkFence vk_fence, uint32_t* image_index) {
+    VkResult result;
+while(creation);
+
+    // Ensure the function pointer is loaded
+    if (_vkAcquireNextImageKHR == NULL) {
+        HYBRIS_DLSYSM(vulkan, &_vkAcquireNextImageKHR, "vkAcquireNextImageKHR");
+    }
+
+    // Log information about the swapchain handle and associated details
+    TRACE("vkAcquireNextImageKHR: Swapchain Handle = %p creation: %d", (void*)swapchain_handle, creation);
+
+    // Optionally trace more details about the swapchain, like capabilities
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+ /*   VkResult capabilitiesResult = _vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+    if (capabilitiesResult == VK_SUCCESS) {
+        TRACE("Swapchain Capabilities:");
+        TRACE("  Min Image Count: %u", surfaceCapabilities.minImageCount);
+        TRACE("  Max Image Count: %u", surfaceCapabilities.maxImageCount);
+        TRACE("  Current Extent: %u x %u", surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height);
+        TRACE("  Max Image Array Layers: %u", surfaceCapabilities.maxImageArrayLayers);
+    } else {
+        TRACE("Failed to query surface capabilities: %d", capabilitiesResult);
+    }
+*/
+    // Trace the other function parameters
+    TRACE("vkAcquireNextImageKHR: Timeout = %" PRIu64, timeout);
+    TRACE("vkAcquireNextImageKHR: Semaphore = %p", (void*)semaphore);
+    TRACE("vkAcquireNextImageKHR: Fence = %p", (void*)vk_fence);
+
+    // Call the actual function
+    result = (*_vkAcquireNextImageKHR)(device, swapchain_handle, timeout, semaphore, vk_fence, image_index);
+
+    // Log the result and acquired image index
+    TRACE("vkAcquireNextImageKHR: Result = %d", result);
+    if (result == VK_SUCCESS) {
+        TRACE("vkAcquireNextImageKHR: Acquired Image Index = %u", *image_index);
+    } else {
+        TRACE("vkAcquireNextImageKHR: Failed to acquire image. Result = %d", result);
+    }
+
+    return result;
+}
+
 #ifdef WANT_WAYLAND
 VkResult vkCreateWaylandSurfaceKHR(VkInstance instance,
         const VkWaylandSurfaceCreateInfoKHR* pCreateInfo,
@@ -131,13 +235,20 @@ PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
     if (_vkGetInstanceProcAddr == NULL) {
         HYBRIS_DLSYSM(vulkan, &_vkGetInstanceProcAddr, "vkGetInstanceProcAddr");
     }
-
     if (!strcmp(pName, "vkEnumerateInstanceExtensionProperties")) {
         return (PFN_vkVoidFunction)vkEnumerateInstanceExtensionProperties;
     } else if (!strcmp(pName, "vkCreateInstance")) {
         return (PFN_vkVoidFunction)vkCreateInstance;
     } else if (!strcmp(pName, "vkGetInstanceProcAddr")) {
         return (PFN_vkVoidFunction)vkGetInstanceProcAddr;
+    } else if (!strcmp(pName, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR")) {
+        return (PFN_vkVoidFunction)vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    } else if (!strcmp(pName, "vkQueuePresentKHR")) {
+        return (PFN_vkVoidFunction)vkQueuePresentKHR;
+    } else if (!strcmp(pName, "vkAcquireNextImageKHR")) {
+        return (PFN_vkVoidFunction)vkAcquireNextImageKHR;
+    } else if (!strcmp(pName, "vkCreateSwapchainKHR")) {
+        return (PFN_vkVoidFunction)vkCreateSwapchainKHR;
 #ifdef WANT_WAYLAND
     } else if (!strcmp(pName, "vkCreateWaylandSurfaceKHR")) {
         return (PFN_vkVoidFunction)vkCreateWaylandSurfaceKHR;
@@ -358,14 +469,14 @@ VULKAN_IDLOAD(vkGetDeviceImageMemoryRequirements);
 VULKAN_IDLOAD(vkGetDeviceImageSparseMemoryRequirements);
 #endif
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceSupportKHR);
-VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
+//VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceFormatsKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfacePresentModesKHR);
-VULKAN_IDLOAD(vkCreateSwapchainKHR);
+//VULKAN_IDLOAD(vkCreateSwapchainKHR);
 VULKAN_IDLOAD(vkDestroySwapchainKHR);
 VULKAN_IDLOAD(vkGetSwapchainImagesKHR);
-VULKAN_IDLOAD(vkAcquireNextImageKHR);
-VULKAN_IDLOAD(vkQueuePresentKHR);
+//VULKAN_IDLOAD(vkAcquireNextImageKHR);
+//VULKAN_IDLOAD(vkQueuePresentKHR);
 VULKAN_IDLOAD(vkGetDeviceGroupPresentCapabilitiesKHR);
 VULKAN_IDLOAD(vkGetDeviceGroupSurfacePresentModesKHR);
 VULKAN_IDLOAD(vkGetPhysicalDevicePresentRectanglesKHR);
