@@ -22,11 +22,26 @@
 
 #include <assert.h>
 #include <map>
+#include "windowbuffer.h"
+#include <nativebase/nativebase.h>
 
+#include <hybris/gralloc/gralloc.h>
+
+#include "logging.h"
 
 /* Keep track of active EGL window surfaces */
 static std::map<EGLSurface,EGLNativeWindowType> _surface_window_map;
 
+extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
+                                                                    native_handle_t *native, EGLClientBuffer *buffer)
+{
+		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native);
+		buf->common.incRef(&buf->common);
+		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
+HYBRIS_ERROR("native buf done");
+
+		return EGL_TRUE;
+}
 
 void egl_helper_push_mapping(EGLSurface surface, EGLNativeWindowType window)
 {

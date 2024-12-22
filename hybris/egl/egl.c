@@ -33,14 +33,25 @@
 #include "ws.h"
 #include "helper.h"
 #include <assert.h>
+#include <fcntl.h>
 
-
+#include <android/rect.h>
 #include <hybris/common/binding.h>
+#include <cutils/native_handle.h>
+#include <hybris/ui/ui_compatibility_layer.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <hardware/gralloc.h>
+#include <system/graphics.h>
+
+#include <hybris/gralloc/gralloc.h>
+
 #include <system/window.h>
 #include "logging.h"
+
+extern EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
+                                                                    native_handle_t *native, EGLClientBuffer *buffer);
 
 static void *egl_handle = NULL;
 static void *glesv2_handle = NULL;
@@ -578,7 +589,6 @@ EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 
 HYBRIS_EGL_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglCopyBuffers, EGLDisplay, EGLSurface, EGLNativePixmapType);
 
-
 static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)
 {
 	HYBRIS_DLSYSM(egl, &_eglCreateImageKHR, "eglCreateImageKHR");
@@ -587,11 +597,135 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	EGLClientBuffer newbuffer = buffer;
 	const EGLint *newattrib_list = attrib_list;
 
-	ws_passthroughImageKHR(&newctx, &newtarget, &newbuffer, &newattrib_list);
+        if(target==EGL_LINUX_DMA_BUF_EXT) {
+	    HYBRIS_ERROR("Target is EGL_LINUX_DMA_BUF_EXT, assuming EGL_DMA_BUF_PLANE0_FD_EXT is native_handle");
+        // Extract the native_handle from attrib_list
+        native_handle_t native_handle;
+        int width = 0, height = 0, format = 0, stride = 0;
+	int buff_fd;
+        for (const EGLint *attr = attrib_list; attr && *attr != EGL_NONE; attr += 2) {
+                HYBRIS_ERROR("Found entry: %d %d", attr[0], attr[1]);
+            switch (attr[0]) {
+		case EGL_DMA_BUF_PLANE0_FD_EXT:
+		    HYBRIS_ERROR("Found EGL_DMA_BUF_PLANE0_FD_EXT: %d %d", attr[0], attr[1]);
+                    buff_fd = (int)(attr[1]);
+                    break;
+                case EGL_WIDTH:
+                    HYBRIS_ERROR("Found EGL_WIDTH");
+                    width = attr[1];
+                    break;
+                case EGL_HEIGHT:
+		    HYBRIS_ERROR("Found EGL_HEIGHT");
+                    height = attr[1];
+                    break;
+                case EGL_LINUX_DRM_FOURCC_EXT:
+                    format = attr[1];
+                    break;
+                case EGL_DMA_BUF_PLANE0_PITCH_EXT:
+                    stride = attr[1];
+                    break;
+                default:
+                    break;
+            }
+        }
+	if(!buff_fd) {
+            HYBRIS_ERROR("No buf_fd found in attrib_list");
+            return EGL_NO_IMAGE_KHR;
+	}
+    native_handle_t handle;
+//    if(read(buff_fd, &handle, sizeof(native_handle_t)) != sizeof(native_handle_t)) {
+//        HYBRIS_ERROR("Fd read failed fd: %d", buff_fd);
+//        return EGL_NO_IMAGE_KHR;
+//    }
+if (fcntl(buff_fd, F_GETFD) == -1) {
+    HYBRIS_ERROR("Invalid or closed file descriptor: %d", buff_fd);
+    return EGL_NO_IMAGE_KHR;
+}
 
-	EGLImageKHR eik = (*_eglCreateImageKHR)(hybris_egl_get_real_display(dpy), newctx, newtarget, newbuffer, newattrib_list);
+if (lseek(buff_fd, 0, SEEK_SET) == -1) {
+    HYBRIS_ERROR("Failed to seek fd: %d", buff_fd);
+    return EGL_NO_IMAGE_KHR;
+}
+
+int header[3];
+if (read(buff_fd, header, sizeof(header)) != sizeof(header)) {
+    HYBRIS_ERROR("Fd1 read failed fd: %d", buff_fd);
+    return EGL_NO_IMAGE_KHR;
+}
+int version = header[0];
+int numFds = header[1];
+int numInts = header[2];
+    HYBRIS_ERROR("Hot native_handle_t, version: %d numFds: %d numInts: %d", version, numFds, numInts);
+
+if (lseek(buff_fd, 0, SEEK_SET) == -1) {
+    HYBRIS_ERROR("Failed to seek fd: %d", buff_fd);
+    return EGL_NO_IMAGE_KHR;
+}
+
+    // Allocate memory for the full handle, including FDs and ints
+    size_t total_size = sizeof(native_handle_t) + 
+                        ((numFds + numInts) * sizeof(int));
+    native_handle_t* full_handle = (native_handle_t*)malloc(total_size);
+    if (!full_handle) {
+        HYBRIS_ERROR("malloc failed size: %d", total_size);
+        return EGL_NO_IMAGE_KHR;
+    }
+
+
+HYBRIS_ERROR("Going to read %d bytes", total_size);
+
+    if(read(buff_fd, full_handle, total_size) != total_size) {
+        HYBRIS_ERROR("Fd1 read failed fd: %d", buff_fd);
+        return EGL_NO_IMAGE_KHR;
+    }
+
+ HYBRIS_ERROR("Got native_handle_t, version: %d numFds: %d numInts: %d", full_handle->version, full_handle->numFds, full_handle->numInts);
+    HYBRIS_ERROR("data:");
+    for(int i=0; i<full_handle->numFds + full_handle->numInts; i++) {
+        HYBRIS_ERROR(" %d ", full_handle->data[i]);
+    }
+        HYBRIS_INFO("Using native_handle for EGL_LINUX_DMA_BUF_EXT");
+        newtarget = EGL_NATIVE_BUFFER_ANDROID;
+const native_handle_t* out_handle = NULL;
+  int ret = hybris_gralloc_import_buffer(full_handle, &out_handle);
+if(ret!=0) {
+HYBRIS_ERROR("Failed to import buf");
+}
+//  native_handle_close(native);
+//  native_handle_delete(native);
+EGLClientBuffer newbuffer1;
+egl_get_win_buf(width, height, GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER, HAL_PIXEL_FORMAT_RGBA_8888, stride,
+                                                                   (native_handle_t *)full_handle, &newbuffer1);
+newbuffer = newbuffer1;
+
+//  HYBRIS_ERROR("Buf width1: %d", graphic_buffer_get_width(gbuf));      // Create a minimal attrib_list for EGL_NATIVE_BUFFER_ANDROID
+        static EGLint native_buffer_attribs[7];
+        native_buffer_attribs[0] = EGL_WIDTH;
+        native_buffer_attribs[1] = width;
+        native_buffer_attribs[2] = EGL_HEIGHT;
+        native_buffer_attribs[3] = height;
+        native_buffer_attribs[4] = EGL_NONE;
+        newattrib_list = native_buffer_attribs;
+	} else {
+
+	ws_passthroughImageKHR(&newctx, &newtarget, &newbuffer, &newattrib_list);
+}
+HYBRIS_ERROR("going to eik buf type: %d\n", newtarget);
+        // Extract the native_handle from attrib_list
+HYBRIS_ERROR("buf: 0x%lx", newbuffer);
+ char hexDump[49];
+    unsigned char* bytePtr = (unsigned char*)newbuffer;
+
+    for (int i = 0; i < 16; ++i) {
+        snprintf(&hexDump[i * 3], 4, "%02X ", bytePtr[i]);
+    }
+
+    HYBRIS_ERROR("First 16 bytes of EGLClientBuffer: %s", hexDump);
+	EGLImageKHR eik = (*_eglCreateImageKHR)(hybris_egl_get_real_display(dpy), newctx, newtarget, newbuffer, NULL);
+HYBRIS_ERROR("EGLImage created: 0x%lx", eik);
 
 	if (eik == EGL_NO_IMAGE_KHR) {
+ HYBRIS_ERROR("EIK failed");
 		return EGL_NO_IMAGE_KHR;
 	}
 
