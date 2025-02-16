@@ -51,6 +51,8 @@
 
 #include <vector>
 
+#include "../tls_patcher.h"
+
 extern void __libc_init_globals(KernelArgumentBlock&);
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
@@ -512,12 +514,13 @@ static void __linker_cannot_link(const char* argv0) {
 }
 
 void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+hybris_tls_patcher_funcs_t _tls_patcher_funcs = {0};
 #ifdef WANT_ARM_TRACING
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
 int _wrapping_enabled = 0;
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int), int wrapping_enabled) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, hybris_tls_patcher_funcs_t* tls_patcher_funcs, void *(create_wrapper)(const char*, void*, int), int wrapping_enabled) {
 #else
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, hybris_tls_patcher_funcs_t* tls_patcher_funcs) {
 #endif
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
@@ -543,6 +546,9 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 
   _get_hooked_symbol = get_hooked_symbol;
   _linker_enable_gdb_support = enable_linker_gdb_support;
+  if (tls_patcher_funcs) {
+    _tls_patcher_funcs = *tls_patcher_funcs;
+  }
 #ifdef WANT_ARM_TRACING
   _create_wrapper = create_wrapper;
   _wrapping_enabled = wrapping_enabled;
