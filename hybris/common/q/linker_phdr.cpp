@@ -49,6 +49,11 @@
 #include "private/CFIShadow.h" // For kLibraryAlignment
 #include "private/bionic_prctl.h"
 
+#include "../tls_patcher.h"
+
+// Thunk allocation constants
+#define THUNK_PADDING_SIZE (64 * 1024)  // 64KB padding after each executable segment
+
 static int GetTargetElfMachine() {
 #if defined(__arm__)
   return EM_ARM;
@@ -506,8 +511,10 @@ size_t phdr_table_get_load_size(const ElfW(Phdr)* phdr_table, size_t phdr_count,
       min_vaddr = phdr->p_vaddr;
     }
 
-    if (phdr->p_vaddr + phdr->p_memsz > max_vaddr) {
-      max_vaddr = phdr->p_vaddr + phdr->p_memsz;
+    ElfW(Addr) segment_end = phdr->p_vaddr + phdr->p_memsz;
+
+    if (segment_end > max_vaddr) {
+      max_vaddr = segment_end;
     }
   }
   if (!found_pt_load) {
@@ -560,8 +567,7 @@ static void* ReserveAligned(size_t size, size_t align) {
 }
 
 // Reserve a virtual address range big enough to hold all loadable
-// segments of a program header table. This is done by creating a
-// private anonymous mmap() with PROT_NONE.
+// segments of a program header table plus thunk regions.
 bool ElfReader::ReserveAddressSpace(address_space_params* address_space) {
   ElfW(Addr) min_vaddr;
   load_size_ = phdr_table_get_load_size(phdr_table_, phdr_num_, &min_vaddr);
@@ -569,6 +575,18 @@ bool ElfReader::ReserveAddressSpace(address_space_params* address_space) {
     DL_ERR("\"%s\" has no loadable segments", name_.c_str());
     return false;
   }
+
+  // Add space for thunk regions after all segments
+  size_t num_executable_segments = 0;
+  for (size_t i = 0; i < phdr_num_; ++i) {
+    const ElfW(Phdr)* phdr = &phdr_table_[i];
+    if (phdr->p_type == PT_LOAD && (phdr->p_flags & PF_X) != 0) {
+      num_executable_segments++;
+    }
+  }
+
+  size_t total_thunk_size = num_executable_segments * THUNK_PADDING_SIZE;
+  load_size_ += total_thunk_size;
 
   uint8_t* addr = reinterpret_cast<uint8_t*>(min_vaddr);
   void* start;
@@ -598,7 +616,17 @@ bool ElfReader::ReserveAddressSpace(address_space_params* address_space) {
   return true;
 }
 
+extern hybris_tls_patcher_funcs_t _tls_patcher_funcs;
+
 bool ElfReader::LoadSegments() {
+  // Collect executable segments for TLS patching after thunk regions are registered
+  struct exec_segment {
+    void* addr;
+    size_t size;
+    int orig_prot;
+  };
+  std::vector<exec_segment> exec_segments;
+
   for (size_t i = 0; i < phdr_num_; ++i) {
     const ElfW(Phdr)* phdr = &phdr_table_[i];
 
@@ -651,11 +679,16 @@ bool ElfReader::LoadSegments() {
         add_dlwarning(name_.c_str(), "W+E load segments");
       }
 
+      int orig_prot = prot;
       if ((prot & PROT_EXEC) != 0) {
         // hybris: make sure executable code is mapped as readable to neutralize
         // https://source.android.com/devices/tech/debug/execute-only-memory
         // without this libgcc's unwind on host may crash
         prot |= PROT_READ;
+
+        // hybris: allow TLS patcher to modify executable segments
+        if (_tls_patcher_funcs.patch_tls)
+          prot |= PROT_WRITE;
       }
 
       void* seg_addr = mmap64(reinterpret_cast<void*>(seg_page_start),
@@ -667,6 +700,11 @@ bool ElfReader::LoadSegments() {
       if (seg_addr == MAP_FAILED) {
         DL_ERR("couldn't map \"%s\" segment %zd: %s", name_.c_str(), i, strerror(errno));
         return false;
+      }
+
+      // hybris: collect executable segments for later TLS patching
+      if (_tls_patcher_funcs.patch_tls && (prot & PROT_EXEC) != 0) {
+        exec_segments.push_back({seg_addr, file_length, orig_prot});
       }
     }
 
@@ -698,6 +736,79 @@ bool ElfReader::LoadSegments() {
       prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, zeromap, zeromap_size, ".bss");
     }
   }
+
+  // Calculate where thunk regions should start - after all ELF segments
+  // Use the original load size calculation to find the end of ELF segments
+  ElfW(Addr) min_vaddr, max_vaddr;
+  size_t elf_size = phdr_table_get_load_size(phdr_table_, phdr_num_, &min_vaddr, &max_vaddr);
+  ElfW(Addr) thunk_start = reinterpret_cast<ElfW(Addr)>(load_start_) + elf_size;
+
+  // Now map thunk regions after all segments for each executable segment
+  for (size_t i = 0; i < phdr_num_; ++i) {
+    const ElfW(Phdr)* phdr = &phdr_table_[i];
+
+    if (phdr->p_type != PT_LOAD || (phdr->p_flags & PF_X) == 0) {
+      continue;
+    }
+
+    // Ensure we don't map beyond our reserved address space
+    ElfW(Addr) load_end = reinterpret_cast<ElfW(Addr)>(load_start_) + load_size_;
+    if (thunk_start + THUNK_PADDING_SIZE > load_end) {
+      DL_ERR("thunk region for \"%s\" segment %zd would exceed reserved address space",
+             name_.c_str(), i);
+      return false;
+    }
+
+    void* thunk_region = mmap(reinterpret_cast<void*>(thunk_start),
+                             THUNK_PADDING_SIZE,
+                             PROT_READ | PROT_WRITE | PROT_EXEC,
+                             MAP_FIXED | MAP_ANONYMOUS | MAP_PRIVATE,
+                             -1,
+                             0);
+    if (thunk_region == MAP_FAILED) {
+      DL_ERR("couldn't map thunk region for \"%s\" segment %zd: %s",
+             name_.c_str(), i, strerror(errno));
+      return false;
+    }
+
+    // Verify we got the address we expected
+    if (thunk_region != reinterpret_cast<void*>(thunk_start)) {
+      DL_ERR("thunk region for \"%s\" segment %zd mapped at wrong address: expected %p, got %p",
+             name_.c_str(), i, reinterpret_cast<void*>(thunk_start), thunk_region);
+      return false;
+    }
+
+    prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, thunk_region, THUNK_PADDING_SIZE, ".thunks");
+
+    // Register the thunk region with the TLS patcher
+    if (_tls_patcher_funcs.register_thunk_region) {
+      _tls_patcher_funcs.register_thunk_region(thunk_region, THUNK_PADDING_SIZE);
+    }
+
+    LD_LOG(kLogDlopen, "Mapped thunk region for %s: %p - %p (%zu bytes)",
+           name_.c_str(), thunk_region,
+           reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(thunk_region) + THUNK_PADDING_SIZE),
+           THUNK_PADDING_SIZE);
+
+    // Move to next thunk region
+    thunk_start += THUNK_PADDING_SIZE;
+  }
+
+  // hybris: Now that all thunk regions are registered, patch TLS accesses in executable segments
+  if (_tls_patcher_funcs.patch_tls && !exec_segments.empty()) {
+    for (const auto& seg : exec_segments) {
+      _tls_patcher_funcs.patch_tls(seg.addr, seg.size, name_.c_str());
+
+      // Restore original write protection if needed
+      if ((seg.orig_prot & PROT_WRITE) == 0) {
+        int prot = PFLAGS_TO_PROT(seg.orig_prot) | PROT_READ;
+        if (mprotect(seg.addr, seg.size, prot) < 0) {
+          DL_ERR("couldn't mprotect \"%s\" segment: %s", name_.c_str(), strerror(errno));
+        }
+      }
+    }
+  }
+
   return true;
 }
 
