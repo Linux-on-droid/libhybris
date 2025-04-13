@@ -56,7 +56,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = egl.pc
 endif
 
-libEGL__GL_LIB_SUFFIX__la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -DPKGLIBDIR="\"$(pkglibdir)/\"" -I$(top_srcdir)/common -I$(top_srcdir)/platforms/common -DDEFAULT_EGL_PLATFORM="\"@DEFAULT_EGL_PLATFORM@\""
+libEGL__GL_LIB_SUFFIX__la_CFLAGS = -I$(top_srcdir)/include -I/usr/include/libdrm $(ANDROID_HEADERS_CFLAGS) -DPKGLIBDIR="\"$(pkglibdir)/\"" -I$(top_srcdir)/common -I$(top_srcdir)/platforms/common -DDEFAULT_EGL_PLATFORM="\"@DEFAULT_EGL_PLATFORM@\""
 if WANT_MESA
 libEGL__GL_LIB_SUFFIX__la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif

@@ -164,7 +164,7 @@ static const struct wl_buffer_listener buffer_listener = {
 };
 
 static void registry_global_handler(void *data, struct wl_registry *registry, uint32_t id, const char *interface, uint32_t version) {
-//HYBRIS_ERROR("HI from registry_global_handler, interface: %s!!!!!\n", interface);
+HYBRIS_ERROR("HI from registry_global_handler, interface: %s!!!!!\n", interface);
     auto **dmabuf_ptr = static_cast<zwp_linux_dmabuf_v1 **>(data);
     if (strcmp(interface, "zwp_linux_dmabuf_v1") == 0) {
         *dmabuf_ptr = static_cast<zwp_linux_dmabuf_v1 *>(
@@ -332,9 +332,9 @@ int WaylandNativeWindow::readQueue(bool block)
 
     if (++m_queueReads == 1) {
         if (block) {
-            ret = wl_display_dispatch_queue(m_display, wl_queue);
+            //ret = wl_display_dispatch_queue(m_display, wl_queue);
         } else {
-            ret = wl_display_dispatch_queue_pending(m_display, wl_queue);
+            //ret = wl_display_dispatch_queue_pending(m_display, wl_queue);
         }
 
         // all threads waiting on the false branch will wake and return now, so we
@@ -346,7 +346,7 @@ int WaylandNativeWindow::readQueue(bool block)
         // the future.
         m_queueReads = 0;
 
-        pthread_cond_broadcast(&cond);
+        //pthread_cond_broadcast(&cond);
 
         if (ret < 0) {
             TRACE("wl_display_dispatch_queue returned an error");
@@ -483,7 +483,7 @@ void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
     if (wnb->wlbuffer)
         wl_buffer_destroy(wnb->wlbuffer);
     wnb->wlbuffer = NULL;
-//    wnb->common.decRef(&wnb->common);
+    wnb->common.decRef(&wnb->common);
     m_freeBufs--;
 }
 
@@ -512,7 +512,7 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 //#endif
     m_bufList.push_back(wnb);
     ++m_freeBufs;
-    HYBRIS_ERROR("Adding another buff, have: %d\n", m_bufList.size());
+
     TRACE("wnb:%p width:%i height:%i format:x%x usage:x%x",
          wnb, wnb->width, wnb->height, wnb->format, wnb->usage);
 
@@ -634,8 +634,8 @@ DrmWaylandBuffer::DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, 
         close(drm_fd);
         return;
     }
-stride = gbm_bo_get_stride(bo);
-  //  TRACE("DrmWaylandBuffer created with DMA-BUF FD: %d\n", dmabuf_fd);
+
+    TRACE("DrmWaylandBuffer created with DMA-BUF FD: %d\n", dmabuf_fd);
 //    native_handle_t handle;
     if (fcntl(dmabuf_fd, F_GETFD) == -1) {
         HYBRIS_ERROR("Invalid or closed file descriptor: %d", dmabuf_fd);
@@ -646,30 +646,28 @@ stride = gbm_bo_get_stride(bo);
         HYBRIS_ERROR("Failed to seek fd: %d", dmabuf_fd);
 //    return EGL_NO_IMAGE_KHR;
     }
-//close(drm_fd);
+
     int header[3];
-int native_handle_id;
+int native_handle_id = -1;
     if (read(dmabuf_fd, &native_handle_id, sizeof(int)) != sizeof(int)) {
         HYBRIS_ERROR("Fd1 read failed fd: %d", dmabuf_fd);
 //    return EGL_NO_IMAGE_KHR;
     }
-//close(dmabuf_fd);
 
-//    HYBRIS_ERROR("native handle id: %d", native_handle_id);
+
+    HYBRIS_ERROR("native handle id: %d", native_handle_id);
     struct drm_evdi_gbm_get_buff cmd;
     cmd.id = native_handle_id;
     cmd.native_handle = (struct evdi_gralloc_buf_user*)malloc(sizeof(struct evdi_gralloc_buf_user));
     if (ioctl(drm_fd, DRM_IOCTL_EVDI_GBM_GET_BUFF, &cmd) < 0) {
         HYBRIS_ERROR("DRM_IOCTL_EVDI_GBM_GET_BUFF failed");
     }
-//close(drm_fd);
- 
-   native_handle_t *tmp_handle = (native_handle_t *)cmd.native_handle;
+    native_handle_t *tmp_handle = (native_handle_t *)cmd.native_handle;
     int version = tmp_handle->version;
     int numFds = tmp_handle->numFds;
     int numInts = tmp_handle->numInts;
 
-//    HYBRIS_ERROR("Got native_handle_t %d, version: %d numFds: %d numInts: %d", cmd.native_handle->version,  version, numFds, numInts);
+    HYBRIS_ERROR("Got native_handle_t, version: %d numFds: %d numInts: %d", version, numFds, numInts);
 
 //    if (lseek(dmabuf_fd, 0, SEEK_SET) == -1) {
 //        HYBRIS_ERROR("Failed to seek fd: %d", dmabuf_fd);
@@ -685,23 +683,20 @@ int native_handle_id;
 //        return EGL_NO_IMAGE_KHR;
     }
 
-  //  HYBRIS_ERROR("Going to read %d bytes", total_size);
+    HYBRIS_ERROR("Going to read %d bytes", total_size);
 
 //    if(read(dmabuf_fd, full_handle, total_size) != total_size) {
 //        HYBRIS_ERROR("Fd1 read failed fd: %d", dmabuf_fd);
 //        return EGL_NO_IMAGE_KHR;
 //    }
     memcpy(full_handle, tmp_handle, total_size);
-free(tmp_handle);
-//    HYBRIS_ERROR("Got native_handle_t, version: %d numFds: %d numInts: %d", full_handle->version, full_handle->numFds, full_handle->numInts);
-  //  HYBRIS_ERROR("data:");
 
-    //for(int i=0; i<full_handle->numFds + full_handle->numInts; i++) {
-      //  HYBRIS_ERROR(" %d ", full_handle->data[i]);
-//    }
+    HYBRIS_ERROR("Got native_handle_t, version: %d numFds: %d numInts: %d", full_handle->version, full_handle->numFds, full_handle->numInts);
+    HYBRIS_ERROR("data:");
 
-//  int ret = hybris_gralloc_import_buffer(full_handle, &handle);
-
+    for(int i=0; i<full_handle->numFds + full_handle->numInts; i++) {
+        HYBRIS_ERROR(" %d ", full_handle->data[i]);
+    }
     handle = full_handle;
      //   HYBRIS_INFO("Using native_handle for EGL_LINUX_DMA_BUF_EXT");
 //init(display, queue);
@@ -732,7 +727,7 @@ static const struct wl_registry_listener registry_listener = {
 };
 */
 void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_display *display, struct wl_event_queue *queue) {
-//HYBRIS_ERROR("HI from DrmWaylandBuffer::init!\n");
+HYBRIS_ERROR("HI from DrmWaylandBuffer::init!\n");
 
     if (!display) return;
 
@@ -746,7 +741,7 @@ void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_displ
         HYBRIS_ERROR("Wayland zwp_linux_dmabuf_v1 not available!\n");
         return;
     } else {
-  //      HYBRIS_ERROR("Wayland zwp_linux_dmabuf_v1 is available dmabuf_fd: %d!!!!\n", dmabuf_fd);
+        HYBRIS_ERROR("Wayland zwp_linux_dmabuf_v1 is available!!!!\n");
 
     }
 
@@ -755,27 +750,20 @@ void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_displ
     zwp_linux_buffer_params_v1_add(params, dmabuf_fd, 0, 0, stride, 0, 0);
     this->wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, GBM_FORMAT_ARGB8888, 0);
 //this->wlbuffer = zwp_linux_buffer_params_v1_create(params, width, height, GBM_FORMAT_ARGB8888, 0);
-//HYBRIS_ERROR("zwp_linux_buffer_params_v1_create_immed done\n");
 
 wl_display_roundtrip(display);
-//    wl_buffer_add_listener(this->wlbuffer, &buffer_listener, nullptr);
+    wl_buffer_add_listener(this->wlbuffer, &buffer_listener, nullptr);
     wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
 
-  //  HYBRIS_ERROR("DrmWaylandBuffer initialized and bound to Wayland wlbuffer: %d\n", this->wlbuffer);
+    HYBRIS_ERROR("DrmWaylandBuffer initialized and bound to Wayland wlbuffer: %d\n", this->wlbuffer);
 }
 
 
 DrmWaylandBuffer::~DrmWaylandBuffer() {
-//HYBRIS_ERROR("DrmWaylandBuffer destroy!!!!!!!!!!!!!!!!!!!!!!!!");
     if (wlbuffer) wl_buffer_destroy(wlbuffer);
     if (dmabuf_fd >= 0) close(dmabuf_fd);
     if (bo) gbm_bo_destroy(bo);
-    if(handle) {
-            native_handle_close(handle);
-//            native_handle_delete(handle);
-    }
-
-//    if (gbm_dev) gbm_device_destroy(gbm_dev);
+    if (gbm_dev) gbm_device_destroy(gbm_dev);
     if (drm_fd >= 0) close(drm_fd);
 }
 //#ifdef HYBRIS_NO_SERVER_SIDE_BUFFERS

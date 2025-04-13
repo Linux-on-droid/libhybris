@@ -38,7 +38,7 @@ extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage,
 		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native);
 		buf->common.incRef(&buf->common);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
-HYBRIS_ERROR("native buf done");
+//HYBRIS_ERROR("native buf done");
 
 		return EGL_TRUE;
 }

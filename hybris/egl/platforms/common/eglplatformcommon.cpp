@@ -262,25 +262,25 @@ eglplatformcommon_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClien
 extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProcAddress(const char *procname)
 {
 #ifdef WANT_WAYLAND
-	if (strcmp(procname, "eglBindWaylandDisplayWL") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglBindWaylandDisplayWL;
-	}
-	else
-	if (strcmp(procname, "eglUnbindWaylandDisplayWL") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglUnbindWaylandDisplayWL;
-	}else
-	if (strcmp(procname, "eglQueryWaylandBufferWL") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
-	}
-	else
-	if (strcmp(procname, "eglHybrisAcquireNativeBufferWL") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType) eglplatformcommon_eglHybrisAcquireNativeBufferWL;
-	}
-	else
+//	if (strcmp(procname, "eglBindWaylandDisplayWL") == 0)
+//	{
+//		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglBindWaylandDisplayWL;
+//	}
+//	else
+//	if (strcmp(procname, "eglUnbindWaylandDisplayWL") == 0)
+//	{
+//		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglUnbindWaylandDisplayWL;
+//	}else
+//	if (strcmp(procname, "eglQueryWaylandBufferWL") == 0)
+//	{
+//		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
+//	}
+//	else
+//	if (strcmp(procname, "eglHybrisAcquireNativeBufferWL") == 0)
+//	{
+//		return (__eglMustCastToProperFunctionPointerType) eglplatformcommon_eglHybrisAcquireNativeBufferWL;
+//	}
+//	else
 #endif
 	if (strcmp(procname, "eglHybrisCreateNativeBuffer") == 0)
 	{

@@ -50,6 +50,13 @@
 #include <system/window.h>
 #include "logging.h"
 
+#include <sys/ioctl.h>
+#include <xf86drm.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 extern EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
                                                                     native_handle_t *native, EGLClientBuffer *buffer);
 
@@ -589,6 +596,88 @@ EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 
 HYBRIS_EGL_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglCopyBuffers, EGLDisplay, EGLSurface, EGLNativePixmapType);
 
+#define DRM_EVDI_GBM_GET_BUFF 0x06
+
+#define DRM_IOCTL_EVDI_GBM_GET_BUFF DRM_IOWR(DRM_COMMAND_BASE +  \
+	DRM_EVDI_GBM_GET_BUFF, struct drm_evdi_gbm_get_buff)
+
+struct evdi_gralloc_buf_user {
+	int version;
+	int numFds;
+	int numInts;
+	int data[128];
+};
+
+struct drm_evdi_gbm_get_buff {
+	int id;
+	struct evdi_gralloc_buf_user *native_handle;
+};
+
+static int drm_auth_magic(int fd, drm_magic_t magic) {
+    drm_auth_t auth;
+    auth.magic = magic;
+    if (ioctl(fd, DRM_IOCTL_AUTH_MAGIC, &auth)) {
+        return -errno;
+    }
+    return 0;
+}
+
+
+static bool drm_is_master(int fd) {
+    return drm_auth_magic(fd, 0) != -EACCES;
+}
+
+int evdi_open(char *device_path) {
+    int fd = open(device_path, O_RDWR);
+    if (fd < 0) {
+        HYBRIS_ERROR("Failed to open device");
+        return -1;
+    }
+
+    if (drm_is_master(fd)) {
+        HYBRIS_ERROR("Process has master on %s", device_path);
+        if (ioctl(fd, DRM_IOCTL_DROP_MASTER, NULL) < 0) {
+            HYBRIS_ERROR("Drop master on %s", device_path);
+            close(fd);
+            return -1;
+        }
+    }
+
+    if (drm_is_master(fd)) {
+        HYBRIS_ERROR("Drop master on %s");
+        close(fd);
+        return -1;
+    }
+
+    return fd;
+}
+
+void debug_fd(int fd) {
+    struct stat statbuf;
+    if (fstat(fd, &statbuf) == -1) {
+        perror("fstat");
+        return;
+    }
+
+    HYBRIS_ERROR("FD %d info:\n", fd);
+    HYBRIS_ERROR("  Mode: %o\n", statbuf.st_mode);
+    HYBRIS_ERROR("  Size: %lld bytes\n", (long long) statbuf.st_size);
+
+    if (S_ISREG(statbuf.st_mode)) {
+        HYBRIS_ERROR("  Type: Regular file\n");
+    } else if (S_ISCHR(statbuf.st_mode)) {
+        HYBRIS_ERROR("  Type: Character device\n");
+    } else if (S_ISDIR(statbuf.st_mode)) {
+        HYBRIS_ERROR("  Type: Directory\n");
+    } else if (S_ISFIFO(statbuf.st_mode)) {
+        HYBRIS_ERROR("  Type: FIFO/pipe (not mmap-able)\n");
+    } else if (S_ISSOCK(statbuf.st_mode)) {
+        HYBRIS_ERROR("  Type: Socket (not mmap-able)\n");
+    } else {
+        HYBRIS_ERROR("  Type: Unknown\n");
+    }
+}
+
 static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)
 {
 	HYBRIS_DLSYSM(egl, &_eglCreateImageKHR, "eglCreateImageKHR");
@@ -596,26 +685,27 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	EGLenum newtarget = target;
 	EGLClientBuffer newbuffer = buffer;
 	const EGLint *newattrib_list = attrib_list;
+const native_handle_t* out_handle = NULL;
 
         if(target==EGL_LINUX_DMA_BUF_EXT) {
-	    HYBRIS_ERROR("Target is EGL_LINUX_DMA_BUF_EXT, assuming EGL_DMA_BUF_PLANE0_FD_EXT is native_handle");
+//	HYBRIS_ERROR("Target is EGL_LINUX_DMA_BUF_EXT, assuming EGL_DMA_BUF_PLANE0_FD_EXT is native_handle id in memfd");
         // Extract the native_handle from attrib_list
-        native_handle_t native_handle;
+        int native_handle_id;
         int width = 0, height = 0, format = 0, stride = 0;
 	int buff_fd;
         for (const EGLint *attr = attrib_list; attr && *attr != EGL_NONE; attr += 2) {
-                HYBRIS_ERROR("Found entry: %d %d", attr[0], attr[1]);
+          //      HYBRIS_ERROR("Found entry: %d %d", attr[0], attr[1]);
             switch (attr[0]) {
 		case EGL_DMA_BUF_PLANE0_FD_EXT:
-		    HYBRIS_ERROR("Found EGL_DMA_BUF_PLANE0_FD_EXT: %d %d", attr[0], attr[1]);
+	//	    HYBRIS_ERROR("Found EGL_DMA_BUF_PLANE0_FD_EXT: %d %d", attr[0], attr[1]);
                     buff_fd = (int)(attr[1]);
                     break;
                 case EGL_WIDTH:
-                    HYBRIS_ERROR("Found EGL_WIDTH");
+            //        HYBRIS_ERROR("Found EGL_WIDTH");
                     width = attr[1];
                     break;
                 case EGL_HEIGHT:
-		    HYBRIS_ERROR("Found EGL_HEIGHT");
+	//	    HYBRIS_ERROR("Found EGL_HEIGHT");
                     height = attr[1];
                     break;
                 case EGL_LINUX_DRM_FOURCC_EXT:
@@ -633,34 +723,44 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
             return EGL_NO_IMAGE_KHR;
 	}
     native_handle_t handle;
-//    if(read(buff_fd, &handle, sizeof(native_handle_t)) != sizeof(native_handle_t)) {
-//        HYBRIS_ERROR("Fd read failed fd: %d", buff_fd);
-//        return EGL_NO_IMAGE_KHR;
-//    }
-if (fcntl(buff_fd, F_GETFD) == -1) {
-    HYBRIS_ERROR("Invalid or closed file descriptor: %d", buff_fd);
-    return EGL_NO_IMAGE_KHR;
-}
 
-if (lseek(buff_fd, 0, SEEK_SET) == -1) {
-    HYBRIS_ERROR("Failed to seek fd: %d", buff_fd);
-    return EGL_NO_IMAGE_KHR;
-}
+    if (fcntl(buff_fd, F_GETFD) == -1) {
+        HYBRIS_ERROR("Invalid or closed file descriptor: %d", buff_fd);
+        return EGL_NO_IMAGE_KHR;
+    }
 
-int header[3];
-if (read(buff_fd, header, sizeof(header)) != sizeof(header)) {
-    HYBRIS_ERROR("Fd1 read failed fd: %d", buff_fd);
-    return EGL_NO_IMAGE_KHR;
-}
-int version = header[0];
-int numFds = header[1];
-int numInts = header[2];
-    HYBRIS_ERROR("Hot native_handle_t, version: %d numFds: %d numInts: %d", version, numFds, numInts);
+    if (lseek(buff_fd, 0, SEEK_SET) == -1) {
+        HYBRIS_ERROR("Failed to seek fd: %d", buff_fd);
+        return EGL_NO_IMAGE_KHR;
+    }
 
-if (lseek(buff_fd, 0, SEEK_SET) == -1) {
-    HYBRIS_ERROR("Failed to seek fd: %d", buff_fd);
-    return EGL_NO_IMAGE_KHR;
-}
+    if (read(buff_fd, &native_handle_id, sizeof(int)) != sizeof(int)) {
+        HYBRIS_ERROR("Fd1 read failed fd: %d", buff_fd);
+        return EGL_NO_IMAGE_KHR;
+    }
+//close(buff_fd);
+//buff_id = buff_fd;
+//    HYBRIS_ERROR("native handle id: %d", native_handle_id);
+    int drm_fd = evdi_open("/dev/dri/card1");
+    struct drm_evdi_gbm_get_buff cmd;
+    cmd.id = native_handle_id;
+    cmd.native_handle = malloc(sizeof(struct evdi_gralloc_buf_user));
+//    cmd.native_handle->data = malloc(sizeof(int)*128);
+    if (ioctl(drm_fd, DRM_IOCTL_EVDI_GBM_GET_BUFF, &cmd) < 0) {
+  //      HYBRIS_ERROR("DRM_IOCTL_EVDI_GBM_GET_BUFF failed");
+        return EGL_NO_IMAGE_KHR;
+    }
+close(drm_fd);
+    native_handle_t *tmp_handle = (native_handle_t *)cmd.native_handle;
+int version = tmp_handle->version;
+int numFds = tmp_handle->numFds;
+int numInts = tmp_handle->numInts;
+//    HYBRIS_ERROR("Hot native_handle_t, version: %d numFds: %d numInts: %d", version, numFds, numInts);
+
+//if (lseek(buff_fd, 0, SEEK_SET) == -1) {
+//    HYBRIS_ERROR("Failed to seek fd: %d", buff_fd);
+//    return EGL_NO_IMAGE_KHR;
+//}
 
     // Allocate memory for the full handle, including FDs and ints
     size_t total_size = sizeof(native_handle_t) + 
@@ -672,31 +772,47 @@ if (lseek(buff_fd, 0, SEEK_SET) == -1) {
     }
 
 
-HYBRIS_ERROR("Going to read %d bytes", total_size);
+//HYBRIS_ERROR("Going to read %d bytes", total_size);
 
-    if(read(buff_fd, full_handle, total_size) != total_size) {
-        HYBRIS_ERROR("Fd1 read failed fd: %d", buff_fd);
-        return EGL_NO_IMAGE_KHR;
-    }
-
- HYBRIS_ERROR("Got native_handle_t, version: %d numFds: %d numInts: %d", full_handle->version, full_handle->numFds, full_handle->numInts);
-    HYBRIS_ERROR("data:");
-    for(int i=0; i<full_handle->numFds + full_handle->numInts; i++) {
-        HYBRIS_ERROR(" %d ", full_handle->data[i]);
-    }
-        HYBRIS_INFO("Using native_handle for EGL_LINUX_DMA_BUF_EXT");
+//    if(read(buff_fd, full_handle, total_size) != total_size) {
+//        HYBRIS_ERROR("Fd1 read failed fd: %d", buff_fd);
+//        return EGL_NO_IMAGE_KHR;
+//    }
+memcpy(full_handle, tmp_handle, total_size);
+ //HYBRIS_ERROR("Got native_handle_t, version: %d numFds: %d numInts: %d", full_handle->version, full_handle->numFds, full_handle->numInts);
+  //  HYBRIS_ERROR("data:");
+ //   for(int i=0; i<full_handle->numFds + full_handle->numInts; i++) {
+//        HYBRIS_ERROR(" %d ", full_handle->data[i]);
+ //   }
+    //    HYBRIS_INFO("Using native_handle for EGL_LINUX_DMA_BUF_EXT");
         newtarget = EGL_NATIVE_BUFFER_ANDROID;
-const native_handle_t* out_handle = NULL;
+//const native_handle_t* out_handle = NULL;
   int ret = hybris_gralloc_import_buffer(full_handle, &out_handle);
+//  native_handle_close(full_handle);
+//  native_handle_delete(full_handle);
+//out_handle = full_handle;
+//debug_fd(full_handle->data[0]);
+//debug_fd(full_handle->data[1]);
+
 if(ret!=0) {
-HYBRIS_ERROR("Failed to import buf");
+HYBRIS_ERROR("Failed to import buf fd's: %d %d\n", full_handle->data[0], full_handle->data[1]);
+//debug_fd(full_handle->data[0]);
+//debug_fd(full_handle->data[1]);
+out_handle = full_handle;
+} else {
+  native_handle_close(full_handle);
+  native_handle_delete(full_handle);
 }
 //  native_handle_close(native);
 //  native_handle_delete(native);
-EGLClientBuffer newbuffer1;
+//EGLClientBuffer newbuffer1;
+//HYBRIS_ERROR("going to egl_get_win_buf");
 egl_get_win_buf(width, height, GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER, HAL_PIXEL_FORMAT_RGBA_8888, stride,
-                                                                   (native_handle_t *)full_handle, &newbuffer1);
-newbuffer = newbuffer1;
+                                                                   (native_handle_t *)out_handle, &newbuffer);
+//newbuffer = newbuffer1;
+//HYBRIS_ERROR("egl_get_win_buf done");
+//native_handle_close(out_handle);
+//native_handle_delete(out_handle);
 
 //  HYBRIS_ERROR("Buf width1: %d", graphic_buffer_get_width(gbuf));      // Create a minimal attrib_list for EGL_NATIVE_BUFFER_ANDROID
         static EGLint native_buffer_attribs[7];
@@ -709,21 +825,30 @@ newbuffer = newbuffer1;
 	} else {
 
 	ws_passthroughImageKHR(&newctx, &newtarget, &newbuffer, &newattrib_list);
+
 }
-HYBRIS_ERROR("going to eik buf type: %d\n", newtarget);
+//HYBRIS_ERROR("going to eik buf type: %d\n", newtarget);
         // Extract the native_handle from attrib_list
-HYBRIS_ERROR("buf: 0x%lx", newbuffer);
- char hexDump[49];
+//HYBRIS_ERROR("buf: 0x%lx", newbuffer);
+// char hexDump[49];
     unsigned char* bytePtr = (unsigned char*)newbuffer;
 
-    for (int i = 0; i < 16; ++i) {
-        snprintf(&hexDump[i * 3], 4, "%02X ", bytePtr[i]);
-    }
+  //  for (int i = 0; i < 16; ++i) {
+  //      snprintf(&hexDump[i * 3], 4, "%02X ", bytePtr[i]);
+  //  }
+//HYBRIS_ERROR("test\n");
+hybris_egl_get_real_display(dpy);
+  //  HYBRIS_ERROR("First 16 bytes of EGLClientBuffer: %s", hexDump);
+char *buf = malloc(16);
+mallopt(M_CHECK_ACTION, 3);
+//HYBRIS_ERROR("test 1\n");
 
-    HYBRIS_ERROR("First 16 bytes of EGLClientBuffer: %s", hexDump);
 	EGLImageKHR eik = (*_eglCreateImageKHR)(hybris_egl_get_real_display(dpy), newctx, newtarget, newbuffer, NULL);
-HYBRIS_ERROR("EGLImage created: 0x%lx", eik);
-
+//HYBRIS_ERROR("EGLImage created: 0x%lx", eik);
+if(out_handle) {
+//native_handle_close(out_handle);
+//native_handle_delete(out_handle);
+}
 	if (eik == EGL_NO_IMAGE_KHR) {
  HYBRIS_ERROR("EIK failed");
 		return EGL_NO_IMAGE_KHR;
@@ -734,7 +859,7 @@ HYBRIS_ERROR("EGLImage created: 0x%lx", eik);
 	image->egl_image = eik;
 	image->egl_buffer = buffer;
 	image->target = target;
-
+	image->handle = out_handle;
 	return (EGLImageKHR)image;
 }
 
@@ -749,11 +874,22 @@ EGLBoolean _my_eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
 	HYBRIS_DLSYSM(egl, &_eglDestroyImageKHR, "eglDestroyImageKHR");
 	struct egl_image *img = image;
+//HYBRIS_ERROR("_my_eglDestroyImageKHR\n");
+
 	EGLBoolean ret = (*_eglDestroyImageKHR)(hybris_egl_get_real_display(dpy), img ? img->egl_image : NULL);
 	if (ret == EGL_TRUE) {
-		free(img);
-		return EGL_TRUE;
+	//	free(img);
+	//	return EGL_TRUE;
 	}
+//HYBRIS_ERROR("_my_eglDestroyImageKHR 1\n");
+
+        if (img->handle) {
+//HYBRIS_ERROR("destroying handle\n");
+            native_handle_close(img->handle);
+//            native_handle_delete(img->handle);
+        }
+free(img);
+
 	return ret;
 }
 

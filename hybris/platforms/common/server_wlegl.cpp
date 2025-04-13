@@ -187,13 +187,15 @@ server_wlegl *
 server_wlegl_create(struct wl_display *display)
 {
 	struct server_wlegl *wlegl;
-
+assert(0);
 	wlegl = new server_wlegl;
 
 	wlegl->display = display;
 	wlegl->global = wl_global_create(display, &android_wlegl_interface, 2,
 					      wlegl, server_wlegl_bind);
 
+// drm->wl_drm_global =
+  //    wl_global_create(display, &wl_drm_interface, 2, drm, bind_drm);
 	return wlegl;
 }
 

@@ -19,6 +19,7 @@
 #define __LIBHYBRIS_WS_H
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <cutils/native_handle.h>
 
 struct ws_egl_interface {
 	void * (*android_egl_dlsym)(const char *symbol);
@@ -32,6 +33,7 @@ struct egl_image
     EGLImageKHR egl_image;
     EGLClientBuffer egl_buffer;
     EGLenum target;
+    native_handle_t *handle;
 };
 
 /* Defined in egl.c */

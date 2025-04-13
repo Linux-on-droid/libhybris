@@ -2,6 +2,7 @@ pkglib_LTLIBRARIES = vulkanplatform_wayland.la
 
 vulkanplatform_wayland_la_SOURCES = vulkanplatform_wayland.cpp wayland_window.cpp $(top_srcdir)/platforms/wayland/wayland_window_common.cpp
 vulkanplatform_wayland_la_CXXFLAGS = \
+        -I/usr/include/libdrm \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/include \

@@ -73,7 +73,7 @@ public:
                       struct wl_event_queue *queue) {}
 };
 
-#ifdef HYBRIS_NO_SERVER_SIDE_BUFFERS
+//#ifdef HYBRIS_NO_SERVER_SIDE_BUFFERS
 
 class ClientWaylandBuffer : public WaylandNativeWindowBuffer
 {
@@ -120,7 +120,22 @@ public:
 
 };
 
-#else
+class DrmWaylandBuffer : public WaylandNativeWindowBuffer
+{
+public:
+    DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, int _usage, struct wl_display *display, struct wl_event_queue *queue, struct zwp_linux_dmabuf_v1 *wl_dmabuf_s);
+    ~DrmWaylandBuffer();
+    
+    void init(struct android_wlegl *android_wlegl, struct wl_display *display, struct wl_event_queue *queue) override;
+
+private:
+    int drm_fd;
+    struct gbm_device *gbm_dev;
+    struct gbm_bo *bo;
+    int dmabuf_fd;
+    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
+};
+//#else
 
 class ServerWaylandBuffer : public WaylandNativeWindowBuffer
 {
@@ -136,7 +151,7 @@ public:
     wl_buffer *m_buf;
 };
 
-#endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
+//#endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
 class WaylandNativeWindow : public BaseNativeWindow {
 public:
@@ -159,6 +174,7 @@ public:
     static void resize_callback(struct wl_egl_window *egl_window, void *);
     static void destroy_window_callback(void *data);
     struct wl_event_queue *wl_queue;
+    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
 
 protected:
     // overloads from BaseNativeWindow

@@ -136,6 +136,8 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     while (m_freeBufs==0) {
         HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
         readQueue(true);
+	if(!m_freeBufs)
+		addBuffer();
     }
 
     std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
@@ -239,7 +241,9 @@ void WaylandNativeWindow::finishSwap()
     {
         wnb->init(m_android_wlegl, m_display, wl_queue);
         TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
-        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
+        if (wnb->wlbuffer == NULL)
+		HYBRIS_ERROR("NO WNB WBUFFER: wnb->wlbuffer: %d\n", wnb->wlbuffer);
+	wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
 

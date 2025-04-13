@@ -29,7 +29,7 @@ BUILT_SOURCES = wayland-android-protocol.c \
 
 endif
 
-libhybris_platformcommon_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -I$(top_srcdir)/common/
+libhybris_platformcommon_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -I$(top_srcdir)/common/ -I/usr/include/libdrm
 if WANT_WAYLAND
 libhybris_platformcommon_la_CFLAGS += $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS) $(ANDROID_HEADERS_CFLAGS)
 endif

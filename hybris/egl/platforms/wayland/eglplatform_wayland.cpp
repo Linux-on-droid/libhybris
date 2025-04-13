@@ -130,7 +130,7 @@ static void callback_done(void *data, wl_callback *cb, uint32_t d)
     wl_callback_destroy(cb);
     if (!dpy->wlegl) {
         fprintf(stderr, "Fatal: the server doesn't advertise the android_wlegl global!");
-        abort();
+//        abort();
     }
 }
 
@@ -164,7 +164,7 @@ extern "C" void waylandws_Terminate(_EGLDisplay *dpy)
 		ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
 	}
 	assert(ret >= 0);
-	android_wlegl_destroy(wdpy->wlegl);
+//	android_wlegl_destroy(wdpy->wlegl);
 	wl_registry_destroy(wdpy->registry);
 	wl_event_queue_destroy(wdpy->queue);
 	delete wdpy;
@@ -186,10 +186,10 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _
 	WaylandDisplay *wdpy = (WaylandDisplay *)display;
 
 	int ret = 0;
-	while (ret == 0 && !wdpy->wlegl) {
-		ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
-	}
-	assert(ret >= 0);
+//	while (ret == 0 && !wdpy->wlegl) {
+//		ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
+//	}
+//	assert(ret >= 0);
 
 	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, wdpy->wlegl);
 	window->common.incRef(&window->common);
