@@ -13,6 +13,9 @@ m4_define([hybris_lt_current], [1])
 m4_define([hybris_lt_revision], [0])
 m4_define([hybris_lt_age], [0])
 
+# noexecstack
+LDFLAGS="$LDFLAGS -Wl,-z,noexecstack"
+
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
