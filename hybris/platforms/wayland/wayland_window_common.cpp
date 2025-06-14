@@ -700,9 +700,9 @@ free(tmp_handle);
       //  HYBRIS_ERROR(" %d ", full_handle->data[i]);
 //    }
 
-//  int ret = hybris_gralloc_import_buffer(full_handle, &handle);
+  int ret = hybris_gralloc_import_buffer(full_handle, &handle);
 
-    handle = full_handle;
+    //handle = full_handle;
      //   HYBRIS_INFO("Using native_handle for EGL_LINUX_DMA_BUF_EXT");
 //init(display, queue);
 }
