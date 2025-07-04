@@ -86,8 +86,12 @@ endif
 
 libEGL__GL_LIB_SUFFIX__la_LDFLAGS = \
 	-ldl \
+	-lgbm \
+        $(top_builddir)/platforms/common/libhybris-platformcommon.la \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/hardware/libhardware.la
+	$(top_builddir)/hardware/libhardware.la \
+       $(top_builddir)/gralloc/libgralloc.la
+
 if !WANT_GLVND
 libEGL__GL_LIB_SUFFIX__la_LDFLAGS += -version-info "1":"0":"0"
 else
