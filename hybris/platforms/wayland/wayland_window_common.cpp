@@ -37,6 +37,8 @@
 #include "logging.h"
 #include <gbm.h>
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
+#include <wayland-client.h>
+//#include <wayland-private.h>
 
 #include <sys/ioctl.h>
 #include <xf86drm.h>
@@ -479,9 +481,18 @@ void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
         wl_callback_destroy(wnb->creation_callback);
         wnb->creation_callback = NULL;
     }
+// struct wl_proxy *proxy = (struct wl_proxy *)wnb->wlbuffer;
+//  const struct wl_interface *iface = wl_proxy_get_interface(proxy);
+// if (!iface) {
+//        return;
+//    }
 
-    if (wnb->wlbuffer)
-        wl_buffer_destroy(wnb->wlbuffer);
+//    if (!iface->methods) {
+//        return;
+//    }
+
+//    if (wnb->wlbuffer)
+//        wl_buffer_destroy(wnb->wlbuffer);
     wnb->wlbuffer = NULL;
 //    wnb->common.decRef(&wnb->common);
     m_freeBufs--;
