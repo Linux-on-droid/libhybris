@@ -707,6 +707,8 @@ extern int evdi_get_native_handle_t(int native_handle_id, native_handle_t **hand
 DrmWaylandBuffer::DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, uint64_t _usage, struct wl_display *display, struct wl_event_queue *queue, struct zwp_linux_dmabuf_v1 *dmabuf)
     : WaylandNativeWindowBuffer(), bo(nullptr), dmabuf_fd(-1), wl_dmabuf(dmabuf)
 {
+    this->common.incRef(&this->common);
+
     int native_handle_id = -1;
     int ret = 0;
     ANativeWindowBuffer::width = w;
