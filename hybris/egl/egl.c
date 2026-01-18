@@ -237,7 +237,11 @@ EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
 
 #ifdef WANT_WAYLAND
 		case EGL_PLATFORM_WAYLAND_KHR:
-			hybris_ws = "wayland";
+			if (access("/dev/dri/by-path/platform-evdi-lindroid.0-card", F_OK) == 0) {
+				hybris_ws = "lindroid-drm";
+			} else {
+				hybris_ws = "wayland";
+			}
 			break;
 #endif
 
@@ -531,6 +535,9 @@ EGLBoolean _my_eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
 	HYBRIS_DLSYSM(egl, &_eglDestroyImageKHR, "eglDestroyImageKHR");
 	struct egl_image *img = image;
+
+	ws_destroyImageKHR(image);
+
 	EGLBoolean ret = (*_eglDestroyImageKHR)(dpy, img ? img->egl_image : NULL);
 	if (ret == EGL_TRUE) {
 		free(img);

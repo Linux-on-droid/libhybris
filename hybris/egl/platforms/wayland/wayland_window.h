@@ -112,6 +112,9 @@ private:
     int m_swap_interval;
     struct wl_display *wl_dpy_wrapper;
     struct wl_surface *wl_surface_wrapper;
+#ifdef WANT_LINDROID_DRM
+    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
+#endif
 };
 
 #endif

@@ -146,5 +146,30 @@ public:
 
 #endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
+// Lindrid_DRM needs its own buffer type as we have to keep reference of relevant gbm bo
+#ifdef WANT_LINDROID_DRM
+class DrmWaylandBuffer : public WaylandNativeWindowBuffer
+{
+public:
+    DrmWaylandBuffer(unsigned int w,
+                     unsigned int h,
+                     int _format,
+                     uint64_t _usage,
+                     struct wl_display *display,
+                     struct wl_event_queue *queue,
+                     struct zwp_linux_dmabuf_v1 *wl_dmabuf);
+    ~DrmWaylandBuffer();
+
+    // android_wlegl will be ignored
+    void init(struct android_wlegl *android_wlegl,
+              struct wl_display *display,
+              struct wl_event_queue *queue) override;
+
+    int drm_fd;
+    struct gbm_bo *bo;
+    int dmabuf_fd;
+    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
+};
+#endif
 #endif
 // vim: noai:ts=4:sw=4:ss=4:expandtab

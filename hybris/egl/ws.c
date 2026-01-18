@@ -171,6 +171,13 @@ void ws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *b
 	return ws->passthroughImageKHR(ctx, target, buffer, attrib_list);
 }
 
+void ws_destroyImageKHR(EGLImageKHR image)
+{
+	assert(ws != NULL);
+	if(ws->destroyImageKHR)
+		return ws->destroyImageKHR(image);
+}
+
 const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
 {
 	if (dpy == EGL_NO_DISPLAY)
