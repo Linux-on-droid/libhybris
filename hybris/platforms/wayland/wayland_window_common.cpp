@@ -783,7 +783,6 @@ void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_displ
 
 DrmWaylandBuffer::~DrmWaylandBuffer() {
     if (bo) gbm_bo_destroy(bo);
-    if (wlbuffer) wl_buffer_destroy(wlbuffer);
     if (dmabuf_fd >= 0) close(dmabuf_fd);
     if (handle) native_handle_close(handle);
 }
