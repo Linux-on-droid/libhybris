@@ -1,0 +1,3 @@
+shlibs:Depends=libhybris-common1 (>= 0.1.0+git20200425)
+misc:Depends=
+misc:Pre-Depends=

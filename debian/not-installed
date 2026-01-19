@@ -1,0 +1,19 @@
+# static build artifacts
+/usr/lib/*/libhybris/linker/*.la
+/usr/lib/*/libhybris/*.la
+/usr/lib/*/*.la
+
+# Headers provided by other packages in debian
+/usr/include/GLES
+/usr/include/CL/
+/usr/include/GLES2
+/usr/include/GLES3
+/usr/include/EGL/
+/usr/include/KHR/
+/usr/include/VG/
+
+# share libraries installed to usr/lib/*/libhybris-egl/
+/usr/lib/*/libEGL.so*
+/usr/lib/*/libGLESv2.so*
+/usr/lib/*/libGLESv1_CM.so*
+/usr/lib/*/libOpenCL.so*

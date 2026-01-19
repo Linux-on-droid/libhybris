@@ -1,0 +1,8 @@
+usr/bin/test_vulkan
+usr/bin/test_hwcomposer
+usr/bin/test_egl
+usr/bin/test_egl_configs
+usr/bin/test_lights
+usr/bin/test_glesv2
+usr/bin/test_glesv3
+usr/bin/test_dlopen
