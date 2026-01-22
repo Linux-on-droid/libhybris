@@ -360,6 +360,9 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 		abort();
 	}
 
+	// Our libgbm *4's the stride to match drm expectations
+	stride = stride / 4;
+
 	// Attempt to get buffer from create-disp
 	if(evdi_get_native_handle_t(native_handle_id, &full_handle, true)) {
 		fprintf(stderr, "Fatal: failed to get native handle");
