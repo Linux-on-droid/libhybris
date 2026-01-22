@@ -101,6 +101,9 @@ __eglGLVNDGetVendorString(int name)
 #ifdef WANT_WAYLAND
             " EGL_EXT_platform_wayland EGL_KHR_platform_wayland"
 #endif
+#ifdef WANT_LINDROID_DRM_GLOBAL
+	    " EGL_KHR_platform_gbm EGL_MESA_platform_gbm EGL_EXT_platform_base"
+#endif
             ;
     }
 

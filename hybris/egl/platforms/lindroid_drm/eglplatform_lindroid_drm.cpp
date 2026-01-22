@@ -142,6 +142,43 @@ int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle, boo
 	return ret;
 }
 
+static uint32_t get_gbm_pixel_format(int hal_format)
+{
+    uint32_t format;
+
+    switch (hal_format) {
+    case HAL_PIXEL_FORMAT_RGBA_8888:
+        format = GBM_FORMAT_ABGR8888;
+        break;
+    case HAL_PIXEL_FORMAT_RGBX_8888:
+        format = GBM_FORMAT_XRGB8888;
+        break;
+    case HAL_PIXEL_FORMAT_RGB_888:
+        format = GBM_FORMAT_RGB888;
+        break;
+    case HAL_PIXEL_FORMAT_RGB_565:
+        format = GBM_FORMAT_RGB565;
+        break;
+    case HAL_PIXEL_FORMAT_BGRA_8888:
+        format = GBM_FORMAT_ARGB8888;
+        break;
+    case HAL_PIXEL_FORMAT_YV12:
+        format = GBM_FORMAT_GR88;
+        break;
+    case HAL_PIXEL_FORMAT_RGBA_FP16:
+        format = GBM_FORMAT_ABGR16161616F;
+        break;
+    case HAL_PIXEL_FORMAT_RGBA_1010102:
+        format = GBM_FORMAT_ABGR2101010;
+        break;
+    default:
+        format = GBM_FORMAT_ABGR8888;
+        break;
+    }
+
+    return format;
+}
+
 extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
                                                                     native_handle_t *native, EGLClientBuffer *buffer)
 {
@@ -391,6 +428,13 @@ extern "C" void lindroid_drmws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowTy
         window->setSwapInterval(interval);
 }
 
+extern "C" void lindroid_drmwws_getConfigAttrib(EGLDisplay *dpy, EGLConfig *config, EGLint *attribute, EGLint *value)
+{
+    if (attribute && value && *attribute == EGL_NATIVE_VISUAL_ID) {
+        EGLint tmp = (EGLint)get_gbm_pixel_format((uint32_t)*value);
+        *value = tmp;
+    }
+}
 
 struct ws_module ws_module_info = {
 	lindroid_drmws_init_module,
@@ -407,6 +451,7 @@ struct ws_module ws_module_info = {
 	lindroid_drmws_releaseDisplay,
 	NULL,
 	lindroid_drmws_destroyImageKHR,
+	lindroid_drmwws_getConfigAttrib,
 };
 
 // vim:ts=4:sw=4:noexpandtab
