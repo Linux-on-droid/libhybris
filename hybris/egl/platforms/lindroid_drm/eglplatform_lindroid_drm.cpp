@@ -400,7 +400,7 @@ extern "C" const char *lindroid_drmws_eglQueryString(EGLDisplay dpy, EGLint name
 	{
 		static char eglextensionsbuf[2048];
 		snprintf(eglextensionsbuf, 2046, "%s %s", ret,
-			"EGL_EXT_swap_buffers_with_damage EGL_WL_create_wayland_buffer_from_image EGL_EXT_platform_base EGL_KHR_platform_gbm"
+			"EGL_EXT_swap_buffers_with_damage EGL_WL_create_wayland_buffer_from_image EGL_EXT_platform_base EGL_KHR_platform_gbm EGL_EXT_image_dma_buf_import EGL_EXT_image_dma_buf_import_modifiers"
 		);
 		ret = eglextensionsbuf;
 	}
@@ -439,6 +439,25 @@ extern "C" void lindroid_drmwws_getConfigAttrib(EGLDisplay *dpy, EGLConfig *conf
     }
 }
 
+// DRM FourCC matches 1-1 with GBM one
+EGLint lindroid_formats[7] = {GBM_FORMAT_ABGR8888, GBM_FORMAT_XRGB8888, GBM_FORMAT_RGB888, GBM_FORMAT_RGB565, GBM_FORMAT_GR88, GBM_FORMAT_ABGR16161616F, GBM_FORMAT_ABGR2101010};
+
+extern "C" EGLBoolean lindroid_drmws_queryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats)
+{
+	if(max_formats < 0)
+		return EGL_FALSE;
+
+	if(max_formats == 0) {
+		*num_formats = sizeof(lindroid_formats) / sizeof(lindroid_formats[0]);
+		return EGL_TRUE;
+	}
+
+	for(int i = 0; i < std::min(sizeof(lindroid_formats) / sizeof(lindroid_formats[0]), static_cast<size_t>(*num_formats)); i++) {
+		formats[i] = lindroid_formats[i];
+	}
+	return EGL_TRUE;
+}
+
 struct ws_module ws_module_info = {
 	lindroid_drmws_init_module,
 	lindroid_drmws_GetDisplay,
@@ -455,6 +474,7 @@ struct ws_module ws_module_info = {
 	NULL,
 	lindroid_drmws_destroyImageKHR,
 	lindroid_drmwws_getConfigAttrib,
+	lindroid_drmws_queryDmaBufFormatsEXT,
 };
 
 // vim:ts=4:sw=4:noexpandtab

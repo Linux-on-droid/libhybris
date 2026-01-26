@@ -463,6 +463,12 @@ HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglQueryContext, EGLDisplay, EGLCont
 HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLBoolean, eglWaitGL);
 HYBRIS_IMPLEMENT_FUNCTION1(egl, EGLBoolean, eglWaitNative, EGLint);
 
+EGLBoolean eglQueryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats)
+{
+	// Underlying android EGL NEVER provides this functionaltiy, so its upo to the ws
+	return ws_queryDmaBufFormatsEXT(dpy, max_formats, formats, num_formats);
+}
+
 EGLBoolean _my_eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects)
 {
 	EGLNativeWindowType win;
@@ -588,6 +594,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_SAMENAME(eglSwapBuffers),
 	OVERRIDE_SAMENAME(eglGetProcAddress),
 	OVERRIDE_SAMENAME(eglGetConfigAttrib),
+	OVERRIDE_SAMENAME(eglQueryDmaBufFormatsEXT),
 	/*
 	 * EGL_EXT_platform_base, in case Android EGL or glvnd advertise its
 	 * support.

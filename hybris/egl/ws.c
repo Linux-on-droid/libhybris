@@ -217,4 +217,13 @@ void ws_getConfigAttrib(EGLDisplay *dpy, EGLConfig *config, EGLint *attribute, E
 
 }
 
+EGLBoolean ws_queryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats)
+{
+	assert(ws != NULL);
+	if (ws->queryDmaBufFormatsEXT)
+		return ws->queryDmaBufFormatsEXT(dpy, max_formats, formats, num_formats);
+
+	return EGL_FALSE;
+}
+
 // vim:ts=4:sw=4:noexpandtab
