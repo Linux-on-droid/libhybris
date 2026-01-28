@@ -226,4 +226,13 @@ EGLBoolean ws_queryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *
 	return EGL_FALSE;
 }
 
+EGLBoolean ws_queryDmaBufModifiersEXT(EGLDisplay dpy, EGLint format, EGLint max_modifiers, EGLuint64KHR *modifiers, EGLBoolean *external_only, EGLint *num_modifiers)
+{
+	assert(ws != NULL);
+	if (ws->queryDmaBufModifiersEXT)
+		return ws->queryDmaBufModifiersEXT(dpy, format, max_modifiers, modifiers, external_only, num_modifiers);
+
+	 return EGL_FALSE;
+}
+
 // vim:ts=4:sw=4:noexpandtab

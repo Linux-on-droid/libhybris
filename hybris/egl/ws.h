@@ -60,6 +60,7 @@ struct ws_module {
 	void (*destroyImageKHR)(EGLImageKHR image);
 	void (*getConfigAttrib)(EGLDisplay *dpy, EGLConfig *config, EGLint *attribute, EGLint *value);
 	EGLBoolean (*queryDmaBufFormatsEXT)(EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats);
+	EGLBoolean (*queryDmaBufModifiersEXT)(EGLDisplay dpy, EGLint format, EGLint max_modifiers, EGLuint64KHR *modifiers, EGLBoolean *external_only, EGLint *num_modifiers);
 };
 
 EGLBoolean ws_init(const char * egl_platform);
@@ -79,4 +80,5 @@ void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval
 void ws_releaseDisplay(struct _EGLDisplay *dpy);
 void ws_getConfigAttrib(EGLDisplay *dpy, EGLConfig *config, EGLint *attribute, EGLint *value);
 EGLBoolean ws_queryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats);
+EGLBoolean ws_queryDmaBufModifiersEXT(EGLDisplay dpy, EGLint format, EGLint max_modifiers, EGLuint64KHR *modifiers, EGLBoolean *external_only, EGLint *num_modifiers);
 #endif

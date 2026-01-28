@@ -16,6 +16,7 @@
  */
 
 #include <android-config.h>
+#include <drm/drm_fourcc.h>
 #include <ws.h>
 #include <malloc.h>
 #include <assert.h>
@@ -148,7 +149,7 @@ static uint32_t get_gbm_pixel_format(int hal_format)
 
     switch (hal_format) {
     case HAL_PIXEL_FORMAT_RGBA_8888:
-        format = GBM_FORMAT_ABGR8888;
+        format = GBM_FORMAT_ARGB8888;
         break;
     case HAL_PIXEL_FORMAT_RGBX_8888:
         format = GBM_FORMAT_XRGB8888;
@@ -172,7 +173,7 @@ static uint32_t get_gbm_pixel_format(int hal_format)
         format = GBM_FORMAT_ABGR2101010;
         break;
     default:
-        format = GBM_FORMAT_ABGR8888;
+        format = GBM_FORMAT_ARGB8888;
         break;
     }
 
@@ -440,21 +441,41 @@ extern "C" void lindroid_drmwws_getConfigAttrib(EGLDisplay *dpy, EGLConfig *conf
 }
 
 // DRM FourCC matches 1-1 with GBM one
-EGLint lindroid_formats[7] = {GBM_FORMAT_ABGR8888, GBM_FORMAT_XRGB8888, GBM_FORMAT_RGB888, GBM_FORMAT_RGB565, GBM_FORMAT_GR88, GBM_FORMAT_ABGR16161616F, GBM_FORMAT_ABGR2101010};
+EGLint lindroid_formats[7] = {GBM_FORMAT_ARGB8888, GBM_FORMAT_XRGB8888, GBM_FORMAT_RGB888, GBM_FORMAT_RGB565, GBM_FORMAT_GR88, GBM_FORMAT_ABGR16161616F, GBM_FORMAT_ABGR2101010};
 
 extern "C" EGLBoolean lindroid_drmws_queryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *formats, EGLint *num_formats)
 {
 	if(max_formats < 0)
 		return EGL_FALSE;
 
-	if(max_formats == 0) {
-		*num_formats = sizeof(lindroid_formats) / sizeof(lindroid_formats[0]);
+	*num_formats = sizeof(lindroid_formats) / sizeof(lindroid_formats[0]);
+	if(max_formats == 0)
 		return EGL_TRUE;
-	}
 
-	for(int i = 0; i < std::min(sizeof(lindroid_formats) / sizeof(lindroid_formats[0]), static_cast<size_t>(*num_formats)); i++) {
+	for(int i = 0; i < std::min(sizeof(lindroid_formats) / sizeof(lindroid_formats[0]), static_cast<size_t>(max_formats)); i++) {
 		formats[i] = lindroid_formats[i];
 	}
+	return EGL_TRUE;
+}
+
+EGLuint64KHR lindroid_modifiers_common[1] = {DRM_FORMAT_MOD_LINEAR};
+
+extern "C" EGLBoolean lindroid_drmws_queryDmaBufModifiersEXT(EGLDisplay dpy, EGLint format, EGLint max_modifiers, EGLuint64KHR *modifiers, EGLBoolean *external_only, EGLint *num_modifiers)
+{
+	if(max_modifiers < 0)
+		return EGL_FALSE;
+
+	*num_modifiers = sizeof(lindroid_modifiers_common) / sizeof(lindroid_modifiers_common[0]);
+	if(max_modifiers == 0)
+		return EGL_TRUE;
+
+	*num_modifiers = sizeof(lindroid_modifiers_common) / sizeof(lindroid_modifiers_common[0]);
+
+	for(int i = 0; i < std::min(sizeof(lindroid_modifiers_common) / sizeof(lindroid_modifiers_common[0]), static_cast<size_t>(max_modifiers)); i++) {
+		modifiers[i] = lindroid_modifiers_common[i];
+		external_only[i] = EGL_FALSE;
+	}
+
 	return EGL_TRUE;
 }
 
@@ -475,6 +496,7 @@ struct ws_module ws_module_info = {
 	lindroid_drmws_destroyImageKHR,
 	lindroid_drmwws_getConfigAttrib,
 	lindroid_drmws_queryDmaBufFormatsEXT,
+	lindroid_drmws_queryDmaBufModifiersEXT,
 };
 
 // vim:ts=4:sw=4:noexpandtab
