@@ -773,7 +773,7 @@ void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_displ
     // Create a Wayland buffer using zwp_linux_dmabuf
     struct zwp_linux_buffer_params_v1 *params = zwp_linux_dmabuf_v1_create_params(wl_dmabuf);
     HYBRIS_ERROR("zwp_linux_buffer_params_v1_add: fd: %d\n", dmabuf_fd);
-    zwp_linux_buffer_params_v1_add(params, dmabuf_fd, 0, 0,  stride,  0, 0);
+    zwp_linux_buffer_params_v1_add(params, dmabuf_fd, 0, 0,  stride * 4,  0, 0);
     this->wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, GBM_FORMAT_ARGB8888, 0);
 
     wl_display_roundtrip(display);
