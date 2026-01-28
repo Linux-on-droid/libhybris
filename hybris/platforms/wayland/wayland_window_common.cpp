@@ -759,7 +759,7 @@ DrmWaylandBuffer::DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, 
         abort();
     }
 
-    stride = gbm_bo_get_stride(bo);
+    stride = gbm_bo_get_stride(bo) / 4;
 }
 
 void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_display *display, struct wl_event_queue *queue) {
