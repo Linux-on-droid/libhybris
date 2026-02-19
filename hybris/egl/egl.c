@@ -469,6 +469,11 @@ EGLBoolean eglQueryDmaBufFormatsEXT(EGLDisplay dpy, EGLint max_formats, EGLint *
 	return ws_queryDmaBufFormatsEXT(dpy, max_formats, formats, num_formats);
 }
 
+EGLBoolean eglQueryDmaBufModifiersEXT(EGLDisplay dpy, EGLint format, EGLint max_modifiers, EGLuint64KHR *modifiers, EGLBoolean *external_only, EGLint *num_modifiers)
+{
+	return ws_queryDmaBufModifiersEXT(dpy, format, max_modifiers, modifiers, external_only, num_modifiers);
+}
+
 EGLBoolean _my_eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects)
 {
 	EGLNativeWindowType win;
@@ -595,6 +600,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_SAMENAME(eglGetProcAddress),
 	OVERRIDE_SAMENAME(eglGetConfigAttrib),
 	OVERRIDE_SAMENAME(eglQueryDmaBufFormatsEXT),
+	OVERRIDE_SAMENAME(eglQueryDmaBufModifiersEXT),
 	/*
 	 * EGL_EXT_platform_base, in case Android EGL or glvnd advertise its
 	 * support.
