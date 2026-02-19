@@ -725,7 +725,7 @@ DrmWaylandBuffer::DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, 
     }
 
     // TBD: stop assuming format/use
-    bo = gbm_bo_create(gbm_dev, w, h, GBM_FORMAT_ARGB8888, GBM_BO_USE_RENDERING | GBM_BO_USE_SCANOUT);
+    bo = gbm_bo_create(gbm_dev, w, h, GBM_FORMAT_ABGR8888, GBM_BO_USE_RENDERING | GBM_BO_USE_SCANOUT);
     if (!bo) {
         HYBRIS_ERROR("Failed to create GBM BO\n");
         abort();
@@ -774,7 +774,7 @@ void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_displ
     struct zwp_linux_buffer_params_v1 *params = zwp_linux_dmabuf_v1_create_params(wl_dmabuf);
     HYBRIS_ERROR("zwp_linux_buffer_params_v1_add: fd: %d\n", dmabuf_fd);
     zwp_linux_buffer_params_v1_add(params, dmabuf_fd, 0, 0,  stride * 4,  0, 0);
-    this->wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, GBM_FORMAT_ARGB8888, 0);
+    this->wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, GBM_FORMAT_ABGR8888, 0);
 
     wl_display_roundtrip(display);
     wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
