@@ -293,7 +293,7 @@ extern "C" __eglMustCastToProperFunctionPointerType lindroid_drmws_eglGetProcAdd
 
 extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list)
 {
-	int buff_fd, native_handle_id;
+	int buff_fd = -1, native_handle_id = -1;
 	int width = 0, height = 0, format = 0, stride = 0;
 	native_handle_t* full_handle;
 
@@ -321,27 +321,27 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 	}
 
 	// As per https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt those valuies are mandatory
-	if(!buff_fd) {
+	if (buff_fd <= 0) {
 		fprintf(stderr, "Fatal: EGL_DMA_BUF_PLANE0_FD_EXT is missing from EGL_LINUX_DMA_BUF_EXT");
 		abort();
 	}
 
-	if(width == 0) {
+	if (width == 0) {
 		fprintf(stderr, "Fatal: EGL_WIDTH is missing from EGL_LINUX_DMA_BUF_EXT");
 		abort();
 	}
 
-	if(height == 0) {
+	if (height == 0) {
 		fprintf(stderr, "Fatal: EGL_HEIGHT is missing from EGL_LINUX_DMA_BUF_EXT");
 		abort();
 	}
 
-	if(format == 0) {
+	if (format == 0) {
 		fprintf(stderr, "Fatal: EGL_LINUX_DRM_FOURCC_EXT is missing from EGL_LINUX_DMA_BUF_EXT");
 		abort();
 	}
 
-	if(stride == 0) {
+	if (stride == 0) {
 		fprintf(stderr, "Fatal: EGL_DMA_BUF_PLANE0_PITCH_EXT is missing from EGL_LINUX_DMA_BUF_EXT");
 		abort();
 	}
@@ -351,12 +351,7 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 		abort();
 	}
 
-	if (lseek(buff_fd, 0, SEEK_SET) == -1) {
-		fprintf(stderr, "Fatal: Failed to seek fd: %d, do fd come from non lindroid driver?", buff_fd);
-		abort();
-	}
-
-	if (read(buff_fd, &native_handle_id, sizeof(int)) != sizeof(int)) {
+	if (pread(buff_fd, &native_handle_id, sizeof(native_handle_id), 0) != sizeof(native_handle_id)) {
 		fprintf(stderr, "Fatal: failed to read fd: %d", buff_fd);
 		abort();
 	}
@@ -365,26 +360,22 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 	stride = stride / 4;
 
 	// Attempt to get buffer from create-disp
-	if(evdi_get_native_handle_t(native_handle_id, &full_handle, true)) {
+	if (evdi_get_native_handle_t(native_handle_id, &full_handle, true) != 0 || !full_handle) {
 		fprintf(stderr, "Fatal: failed to get native handle");
 		abort();
 	}
 
 	// Convert native handle to EGLClientBuffer
-	egl_get_win_buf(width, height, GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER, HAL_PIXEL_FORMAT_RGBA_8888, stride, (native_handle_t *)full_handle, buffer);
-
-	static EGLint native_buffer_attribs[7];
-        native_buffer_attribs[0] = EGL_WIDTH;
-        native_buffer_attribs[1] = width;
-        native_buffer_attribs[2] = EGL_HEIGHT;
-        native_buffer_attribs[3] = height;
-        native_buffer_attribs[4] = EGL_NONE;
-        *attrib_list = native_buffer_attribs;
+	if (!egl_get_win_buf(width, height,
+						 GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER,
+						 HAL_PIXEL_FORMAT_RGBA_8888, stride,
+						 (native_handle_t *)full_handle, buffer)) {
+		return;
+	}
 
 	*attrib_list = NULL;
 	*ctx = EGL_NO_CONTEXT;
 	*target = EGL_NATIVE_BUFFER_ANDROID;
-
 }
 
 extern "C" void lindroid_drmws_destroyImageKHR(EGLImageKHR image) {
