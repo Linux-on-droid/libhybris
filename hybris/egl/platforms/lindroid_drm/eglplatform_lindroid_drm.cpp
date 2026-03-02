@@ -365,10 +365,15 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 		abort();
 	}
 
+	// Prevent HWC from alpha-blending garbage
+	int hal_format = (format == DRM_FORMAT_XRGB8888 || format == DRM_FORMAT_XBGR8888)
+					 ? HAL_PIXEL_FORMAT_RGBX_8888
+					 : HAL_PIXEL_FORMAT_RGBA_8888;
+
 	// Convert native handle to EGLClientBuffer
 	if (!egl_get_win_buf(width, height,
 						 GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER,
-						 HAL_PIXEL_FORMAT_RGBA_8888, stride,
+						 hal_format, stride,
 						 (native_handle_t *)full_handle, buffer)) {
 		return;
 	}
