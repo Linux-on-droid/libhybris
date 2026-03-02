@@ -464,7 +464,8 @@ extern "C" EGLBoolean lindroid_drmws_queryDmaBufModifiersEXT(EGLDisplay dpy, EGL
 
 	for(int i = 0; i < std::min(sizeof(lindroid_modifiers_common) / sizeof(lindroid_modifiers_common[0]), static_cast<size_t>(max_modifiers)); i++) {
 		modifiers[i] = lindroid_modifiers_common[i];
-		external_only[i] = EGL_FALSE;
+		if(external_only)
+			external_only[i] = EGL_FALSE;
 	}
 
 	return EGL_TRUE;
