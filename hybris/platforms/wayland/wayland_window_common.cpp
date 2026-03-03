@@ -521,7 +521,6 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
     return wnb;
 }
 
-
 int WaylandNativeWindow::setBufferCount(int cnt) {
     TRACE("cnt:%d", cnt);
 
@@ -529,7 +528,6 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
         return NO_ERROR;
 
     lock();
-
     if ((int)m_bufList.size() > cnt) {
         /* Decreasing buffer count, remove from beginning */
         std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
@@ -551,9 +549,6 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
     return NO_ERROR;
 }
-
-
-
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     lock();
@@ -768,30 +763,21 @@ DrmWaylandBuffer::DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, 
 }
 
 void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_display *display, struct wl_event_queue *queue) {
-    wl_display_roundtrip(display);
-
     if (!wl_dmabuf) {
         HYBRIS_ERROR("Wayland zwp_linux_dmabuf_v1 not available!\n");
         abort();
     }
 
     // Create a Wayland buffer using zwp_linux_dmabuf
+
     struct zwp_linux_buffer_params_v1 *params = zwp_linux_dmabuf_v1_create_params(wl_dmabuf);
     HYBRIS_ERROR("zwp_linux_buffer_params_v1_add: fd: %d\n", dmabuf_fd);
     zwp_linux_buffer_params_v1_add(params, dmabuf_fd, 0, 0,  stride * 4,  0, 0);
     uint32_t req_format = (this->format == HAL_PIXEL_FORMAT_RGBX_8888) ? GBM_FORMAT_XRGB8888 : GBM_FORMAT_ABGR8888;
     this->wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, req_format, 0);
     zwp_linux_buffer_params_v1_destroy(params);
-
-    if (!this->wlbuffer) {
-        HYBRIS_ERROR("Failed to create wl_buffer from zwp_linux_dmabuf_v1\n");
-        abort();
-    }
-
-    wl_display_roundtrip(display);
     wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
 }
-
 
 DrmWaylandBuffer::~DrmWaylandBuffer() {
     if (bo)
