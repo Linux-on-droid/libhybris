@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <mutex>
 #include <algorithm>
+#include <unordered_set>
 #include <gbm.h>
 #include <wayland-client.h>
 #include <xf86drm.h>
@@ -72,6 +73,38 @@ static EGLint (*_eglClientWaitSyncKHR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint f
 
 //static std::vector<HWComposerNativeWindow *> _nativewindows;
 static std::mutex _nativewindows_mutex;
+static std::mutex g_imported_handle_mutex;
+static std::unordered_set<const native_handle_t *> g_imported_handles;
+
+static inline void register_imported_handle(const native_handle_t *handle)
+{
+    if (!handle)
+        return;
+    std::lock_guard<std::mutex> lk(g_imported_handle_mutex);
+    g_imported_handles.insert(handle);
+}
+
+static inline bool unregister_imported_handle(const native_handle_t *handle)
+{
+    if (!handle)
+        return false;
+    std::lock_guard<std::mutex> lk(g_imported_handle_mutex);
+    return g_imported_handles.erase(handle) != 0;
+}
+
+static inline void release_native_handle(const native_handle_t *handle, bool imported)
+{
+    if (!handle)
+        return;
+
+    if (imported) {
+        hybris_gralloc_release((buffer_handle_t)handle, 1);
+    } else {
+        native_handle_t *mutable_handle = const_cast<native_handle_t *>(handle);
+        native_handle_close(mutable_handle);
+        native_handle_delete(mutable_handle);
+    }
+}
 int drm_fd;
 struct gbm_device *gbm_dev;
 
@@ -114,10 +147,17 @@ int evdi_open(char *device_path) {
 	return fd;
 }
 
-int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle, bool import) {
+int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle,
+                             bool import, bool *imported_out) {
 	struct drm_evdi_gbm_get_buff cmd;
 	int ret = 0;
 	native_handle_t *tmp_handle;
+
+	if (handle)
+		*handle = nullptr;
+	if (imported_out)
+		*imported_out = false;
+
 	cmd.id = native_handle_id;
 	cmd.native_handle = malloc(max_native_handle_size);
 
@@ -133,13 +173,21 @@ int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle, boo
 		return -ENOMEM;
 	}
 
-	if(import && hybris_gralloc_import_buffer((const native_handle_t*)tmp_handle, (buffer_handle_t*)handle)) {
+	if (import) {
+		buffer_handle_t imported_handle = nullptr;
+		if (hybris_gralloc_import_buffer((const native_handle_t*)tmp_handle,
+						 &imported_handle) == 0 &&
+		    imported_handle) {
+			*handle = (native_handle_t *)imported_handle;
+			if (imported_out)
+				*imported_out = true;
+			native_handle_close(tmp_handle);
+			native_handle_delete(tmp_handle);
+			return ret;
+		}
 		fprintf(stderr, "failed to import buf, attempting to use as is");
-		*handle = tmp_handle;
-	} else {
-		native_handle_close(tmp_handle);
-		native_handle_delete(tmp_handle);
 	}
+	*handle = tmp_handle;
 	return ret;
 }
 
@@ -295,7 +343,8 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 {
 	int buff_fd = -1, native_handle_id = -1;
 	int width = 0, height = 0, format = 0, stride = 0;
-	native_handle_t* full_handle;
+	native_handle_t* full_handle = nullptr;
+	bool full_handle_imported = false;
 
 	// Parse Image parameters
 	for (const EGLint *attr = *attrib_list; attr && *attr != EGL_NONE; attr += 2) {
@@ -360,7 +409,8 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 	stride = stride / 4;
 
 	// Attempt to get buffer from create-disp
-	if (evdi_get_native_handle_t(native_handle_id, &full_handle, true) != 0 || !full_handle) {
+	if (evdi_get_native_handle_t(native_handle_id, &full_handle, true,
+				     &full_handle_imported) != 0 || !full_handle) {
 		fprintf(stderr, "Fatal: failed to get native handle");
 		abort();
 	}
@@ -375,8 +425,12 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 						 GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER,
 						 hal_format, stride,
 						 (native_handle_t *)full_handle, buffer)) {
+		release_native_handle(full_handle, full_handle_imported);
 		return;
 	}
+
+	if (full_handle_imported)
+		register_imported_handle(full_handle);
 
 	*attrib_list = NULL;
 	*ctx = EGL_NO_CONTEXT;
@@ -385,9 +439,16 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 
 extern "C" void lindroid_drmws_destroyImageKHR(EGLImageKHR image) {
 	struct egl_image *img = (egl_image*)image;
-	if(img->ws_buffer) {
-              native_handle_close(((ANativeWindowBuffer*)img->ws_buffer)->handle);
-	}
+	if (!img || !img->ws_buffer)
+		return;
+
+	const native_handle_t *handle =
+		((ANativeWindowBuffer*)img->ws_buffer)->handle;
+	if (!handle)
+		return;
+
+    bool imported = unregister_imported_handle(handle);
+    release_native_handle(handle, imported);
 }
 
 extern "C" const char *lindroid_drmws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
