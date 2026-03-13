@@ -69,8 +69,8 @@ static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char
 
 //static std::vector<HWComposerNativeWindow *> _nativewindows;
 static std::mutex _nativewindows_mutex;
-int drm_fd;
-struct gbm_device *gbm_dev;
+int drm_fd = -1;
+struct gbm_device *gbm_dev = nullptr;
 
 static int drm_auth_magic(int fd, drm_magic_t magic) {
     drm_auth_t auth;
@@ -180,10 +180,10 @@ static uint32_t get_gbm_pixel_format(int hal_format)
 extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
                                                                     native_handle_t *native, EGLClientBuffer *buffer)
 {
-        if(!native) {
+	if(!native) {
 		fprintf(stderr, "egl_get_win_buf: native handle cant be NULL!");
 		return EGL_FALSE;
-        }
+	}
 	RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native);
 	buf->common.incRef(&buf->common);
 	*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
@@ -193,8 +193,12 @@ extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage,
 extern "C" void lindroid_drmws_init_module(struct ws_egl_interface *egl_iface)
 {
 	// TBD: Is that the best way?
-	drm_fd = evdi_open("/dev/dri/by-path/platform-evdi-lindroid.0-card");
-	gbm_dev = gbm_create_device(drm_fd);
+	if(drm_fd < 0)
+		drm_fd = evdi_open("/dev/dri/by-path/platform-evdi-lindroid.0-card");
+	
+	if(!gbm_dev)
+		gbm_dev = gbm_create_device(drm_fd);
+	
 	hybris_gralloc_initialize(0);
 	eglplatformcommon_init(egl_iface);
 }
@@ -393,7 +397,7 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 extern "C" void lindroid_drmws_destroyImageKHR(EGLImageKHR image) {
 	struct egl_image *img = (egl_image*)image;
 	if(img->ws_buffer) {
-              native_handle_close(((ANativeWindowBuffer*)img->ws_buffer)->handle);
+		native_handle_close(((ANativeWindowBuffer*)img->ws_buffer)->handle);
 	}
 }
 
