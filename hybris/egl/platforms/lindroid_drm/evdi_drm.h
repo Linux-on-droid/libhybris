@@ -14,7 +14,7 @@
 #include <drm/drm.h>
 #endif
 
-size_t max_native_handle_size = sizeof(int) * (128 + 3);
+#define max_native_handle_size (sizeof(int) * (128 + 3))
 
 enum poll_event_type {
 	none = 0,

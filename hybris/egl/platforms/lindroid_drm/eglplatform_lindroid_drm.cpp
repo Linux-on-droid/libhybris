@@ -33,6 +33,7 @@
 #include <xf86drm.h>
 #include <sys/ioctl.h>
 #include <windowbuffer.h>
+#include "gbm_native_window.h"
 extern "C" {
 #include <eglplatformcommon.h>
 };
@@ -262,21 +263,22 @@ extern "C" void lindroid_drmws_Terminate(_EGLDisplay *dpy)
 
 extern "C" EGLNativeWindowType lindroid_drmws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
 {
-	struct wl_egl_window *wl_window = (struct wl_egl_window*) win;
-	struct wl_display *wl_display = (struct wl_display*) display;
+//	struct wl_egl_window *wl_window = (struct wl_egl_window*) win;
+//	struct wl_display *wl_display = (struct wl_display*) display;
 
-	if (wl_window == 0 || wl_display == 0) {
-		HYBRIS_ERROR("Running with EGL_PLATFORM=wayland without setup wayland environment is not possible");
-		HYBRIS_ERROR("If you want to run a standlone EGL client do it like this:");
-		HYBRIS_ERROR(" $ export EGL_PLATFORM=null");
-		HYBRIS_ERROR(" $ test_glevs2");
-		abort();
-	}
+//	if (wl_window == 0 || wl_display == 0) {
+//		HYBRIS_ERROR("Running with EGL_PLATFORM=wayland without setup wayland environment is not possible");
+//		HYBRIS_ERROR("If you want to run a standlone EGL client do it like this:");
+//		HYBRIS_ERROR(" $ export EGL_PLATFORM=null");
+//		HYBRIS_ERROR(" $ test_glevs2");
+//		abort();
+//	}
 
-	WaylandDisplay *wdpy = (WaylandDisplay *)display;
+//	WaylandDisplay *wdpy = (WaylandDisplay *)display;
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, NULL);
-	window->common.incRef(&window->common);
+//	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, NULL);
+//	window->common.incRef(&window->common);
+GbmNativeWindow *window = new GbmNativeWindow((gbm_surface *)win);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
 
@@ -406,19 +408,21 @@ extern "C" const char *lindroid_drmws_eglQueryString(EGLDisplay dpy, EGLint name
 
 extern "C" void lindroid_drmws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects)
 {
-        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-        window->prepareSwap(damage_rects, damage_n_rects);
+//        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
+//        window->prepareSwap(damage_rects, damage_n_rects);
 }
 
 extern "C" void lindroid_drmws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
 {
         _init_egl_funcs(dpy);
-        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-        if (_eglCreateSyncKHR) {
-                EGLSyncKHR sync = (*_eglCreateSyncKHR)(dpy, EGL_SYNC_FENCE_KHR, NULL);
-                (*_eglClientWaitSyncKHR)(dpy, sync, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR, EGL_FOREVER_KHR);
-                (*_eglDestroySyncKHR)(dpy, sync);
-        }
+//        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
+//        if (_eglCreateSyncKHR) {
+//                EGLSyncKHR sync = (*_eglCreateSyncKHR)(dpy, EGL_SYNC_FENCE_KHR, NULL);
+//                (*_eglClientWaitSyncKHR)(dpy, sync, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR, EGL_FOREVER_KHR);
+//                (*_eglDestroySyncKHR)(dpy, sync);
+//        }
+GbmNativeWindow *window = static_cast<GbmNativeWindow *>((struct ANativeWindow *)win);
+
         window->finishSwap();
 }
 

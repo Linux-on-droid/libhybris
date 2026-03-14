@@ -19,6 +19,8 @@ linux-dmabuf-unstable-v1-protocol.c: $(WAYLAND_DMABUF_XML)
 
 eglplatform_lindroid_drm_la_SOURCES = \
 	eglplatform_lindroid_drm.cpp \
+	gbm_native_window_buffer.cpp \
+	gbm_native_window.cpp \
 	$(top_srcdir)/platforms/wayland/wayland_window_common.cpp \
 	$(top_srcdir)/egl/platforms/wayland/wayland_window.cpp
 
@@ -64,6 +66,7 @@ eglplatform_lindroid_drm_la_LIBADD = \
 	$(top_builddir)/platforms/common/libhybris-platformcommon.la \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/gralloc/libgralloc.la \
+	/usr/lib/aarch64-linux-gnu/gbm/hybris_gbm.so \
 	$(WAYLAND_CLIENT_LIBS) \
 	$(LIBDRM_LIBS) \
 	$(GBM_LIBS)
