@@ -263,15 +263,27 @@ extern "C" __eglMustCastToProperFunctionPointerType lindroid_drmws_eglGetProcAdd
 
 extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list)
 {
-	int buff_fd = -1, native_handle_id = -1;
 	int width = 0, height = 0, format = 0, stride = 0;
-	native_handle_t* full_handle;
+	native_handle_t* full_handle = nullptr;
+
+	int plane_fds[4];
+	int num_planes = 0;
+	int meta_fd = -1;
 
 	// Parse Image parameters
 	for (const EGLint *attr = *attrib_list; attr && *attr != EGL_NONE; attr += 2) {
 		switch (attr[0]) {
 			case EGL_DMA_BUF_PLANE0_FD_EXT:
-				buff_fd = (int)(attr[1]);
+				plane_fds[num_planes++] = attr[1];
+				break;
+			case EGL_DMA_BUF_PLANE1_FD_EXT:
+				plane_fds[num_planes++] = attr[1];
+				break;
+			case EGL_DMA_BUF_PLANE2_FD_EXT:
+				plane_fds[num_planes++] = attr[1];
+				break;
+			case EGL_DMA_BUF_PLANE3_FD_EXT:
+				plane_fds[num_planes++] = attr[1];
 				break;
 			case EGL_WIDTH:
 				width = attr[1];
@@ -283,19 +295,19 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 				format = attr[1];
 				break;
 			case EGL_DMA_BUF_PLANE0_PITCH_EXT:
-				stride = attr[1];
+				stride = attr[1] / 4; // Our libgbm *4's the stride to match drm expectations
 				break;
 			default:
 				break;
 		}
 	}
 
-	// As per https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt those valuies are mandatory
-	if (buff_fd <= 0) {
-		fprintf(stderr, "Fatal: EGL_DMA_BUF_PLANE0_FD_EXT is missing from EGL_LINUX_DMA_BUF_EXT");
-		abort();
-	}
+    if (num_planes == 0) {
+        fprintf(stderr, "No DMA-BUF planes\n");
+        abort();
+    }
 
+	// As per https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt those valuies are mandatory
 	if (width == 0) {
 		fprintf(stderr, "Fatal: EGL_WIDTH is missing from EGL_LINUX_DMA_BUF_EXT");
 		abort();
@@ -316,24 +328,48 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 		abort();
 	}
 
-	if (fcntl(buff_fd, F_GETFD) == -1) {
-		fprintf(stderr, "Fatal: Invalid or closed file descriptor: %d", buff_fd);
-		abort();
-	}
+    meta_fd = plane_fds[num_planes - 1];
+    num_planes--;
 
-	if (pread(buff_fd, &native_handle_id, sizeof(native_handle_id), 0) != sizeof(native_handle_id)) {
-		fprintf(stderr, "Fatal: failed to read fd: %d", buff_fd);
-		abort();
-	}
+    int header[4];
+    if (pread(meta_fd, header, sizeof(header), 0) != (ssize_t)sizeof(header)) {
+        fprintf(stderr, "Failed to read meta_fd\n");
+        abort();
+    }
 
-	// Our libgbm *4's the stride to match drm expectations
-	stride = stride / 4;
+    int evdi_buff_id = header[0];
+    int version = header[1];
+    int numFds = header[2];
+    int numInts = header[3];
 
-	// Attempt to get buffer from create-disp
-	if (evdi_get_native_handle_t(native_handle_id, &full_handle, true) != 0 || !full_handle) {
-		fprintf(stderr, "Fatal: failed to get native handle");
-		abort();
-	}
+    if (evdi_buff_id == -1 && numInts > 0) {
+	    int meta_extra[numInts];
+	    if (pread(meta_fd, meta_extra, numInts * sizeof(int), sizeof(header)) != (ssize_t)(numInts * sizeof(int))) {
+	        fprintf(stderr, "Failed to read extra metadata\n");
+	        abort();
+	    }
+
+	    native_handle_t* nh = native_handle_create(num_planes, numInts);
+        nh->version = version;
+
+        for (int i = 0; i < num_planes; i++)
+            nh->data[i] = plane_fds[i];
+
+        for (int i = 0; i < numInts; i++)
+            nh->data[num_planes + i] = meta_extra[i];
+
+        const native_handle_t* out_handle = nullptr;
+        if (hybris_gralloc_import_buffer(nh, &out_handle) == 0 && out_handle)
+            full_handle = const_cast<native_handle_t*>(out_handle);
+
+        native_handle_delete(nh);
+	} else {
+		// Attempt to get buffer from create-disp
+		if (evdi_get_native_handle_t(evdi_buff_id, &full_handle, true) != 0 || !full_handle) {
+			fprintf(stderr, "Fatal: failed to get native handle\n");
+			abort();
+		}
+    }
 
 	// Prevent HWC from alpha-blending garbage
 	int hal_format = (format == DRM_FORMAT_XRGB8888 || format == DRM_FORMAT_XBGR8888)
@@ -344,8 +380,9 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 	if (!egl_get_win_buf(width, height,
 						 GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_COMPOSER,
 						 hal_format, stride,
-						 (native_handle_t *)full_handle, buffer)) {
-		return;
+						 full_handle, buffer)) {
+		fprintf(stderr, "egl_get_win_buf failed\n");
+		abort();
 	}
 
 	*attrib_list = NULL;

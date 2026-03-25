@@ -42,6 +42,8 @@
 #include <fcntl.h>
 #include <wayland-client.h>
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
+#include <sys/mman.h>
+#include <vector>
 #endif // WANT_LINDROID_DRM
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
@@ -694,94 +696,83 @@ void ServerWaylandBuffer::init(android_wlegl *, wl_display *, wl_event_queue *qu
 #endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
 #ifdef WANT_LINDROID_DRM
-extern int drm_fd;
-extern struct gbm_device *gbm_dev;
-extern int evdi_open(char *device_path);
-extern int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle, bool import);
-
-DrmWaylandBuffer::DrmWaylandBuffer(unsigned int w, unsigned int h, int _format, uint64_t _usage, struct wl_display *display, struct wl_event_queue *queue, struct zwp_linux_dmabuf_v1 *dmabuf)
-    : WaylandNativeWindowBuffer(), bo(nullptr), dmabuf_fd(-1), wl_dmabuf(dmabuf)
+DrmWaylandBuffer::DrmWaylandBuffer(
+    unsigned int w, unsigned int h, int _format, uint64_t _usage,
+    struct wl_display *display, struct wl_event_queue *queue,
+    struct zwp_linux_dmabuf_v1 *dmabuf)
+    : WaylandNativeWindowBuffer(), wl_dmabuf(dmabuf)
 {
-    this->common.incRef(&this->common);
+    width = w;
+    height = h;
+    format = _format;
+    usage = _usage;
 
-    int native_handle_id = -1;
-    int ret = 0;
-    ANativeWindowBuffer::width = w;
-    ANativeWindowBuffer::height = h;
-    ANativeWindowBuffer::format = _format;
-    ANativeWindowBuffer::usage = _usage;
-
-    if (drm_fd < 0) {
-        HYBRIS_ERROR("DRM device was never open\n");
-        drm_fd = evdi_open("/dev/dri/by-path/platform-evdi-lindroid.0-card");
-        gbm_dev = gbm_create_device(drm_fd);
-    }
-    if (!gbm_dev) {
-        HYBRIS_ERROR("GBM device was never created\n");
+    int ret = hybris_gralloc_allocate(width, height, format, (uint32_t)usage, &handle, (uint32_t*)&stride);
+    if (ret != 0) {
+        fprintf(stderr, "lindroid-drm: failed to allocate gralloc buffer: %d\n", ret);
         abort();
     }
 
-    // Map opaque HAL formats to opaque GBM formats
-    uint32_t req_format = (_format == HAL_PIXEL_FORMAT_RGBX_8888) ? GBM_FORMAT_XRGB8888 : GBM_FORMAT_ABGR8888;
-    bo = gbm_bo_create(gbm_dev, w, h, req_format, GBM_BO_USE_RENDERING | GBM_BO_USE_SCANOUT);
-    if (!bo) {
-        HYBRIS_ERROR("Failed to create GBM BO\n");
-        abort();
-    }
-
-    dmabuf_fd = gbm_bo_get_fd(bo);
-    if (dmabuf_fd < 0) {
-        HYBRIS_ERROR("Failed to export GBM BO as DMA-BUF");
-        gbm_bo_destroy(bo);
-        abort();
-    }
-
-    if (fcntl(dmabuf_fd, F_GETFD) == -1) {
-        HYBRIS_ERROR("Fatal: Invalid or closed file descriptor: %d", dmabuf_fd);
-        abort();
-    }
-
-    if (lseek(dmabuf_fd, 0, SEEK_SET) == -1) {
-        HYBRIS_ERROR("Fatal: Failed to seek fd: %d, do fd come from non lindroid driver?", dmabuf_fd);
-        abort();
-    }
-
-    if (read(dmabuf_fd, &native_handle_id, sizeof(int)) != sizeof(int)) {
-        HYBRIS_ERROR("Fatal: failed to read fd: %d", dmabuf_fd);
-        abort();
-    }
-
-    ret = evdi_get_native_handle_t(native_handle_id, (native_handle_t**)&handle, true);
-    if(ret) {
-        HYBRIS_ERROR("Failed to import bo\n");
-        abort();
-    }
-
-    stride = gbm_bo_get_stride(bo) / 4;
+    common.incRef(&common);
 }
 
-void DrmWaylandBuffer::init(struct android_wlegl *android_wlegl, struct wl_display *display, struct wl_event_queue *queue) {
+void DrmWaylandBuffer::init(
+    struct android_wlegl *android_wlegl,
+    struct wl_display *display,
+    struct wl_event_queue *queue)
+{
     if (!wl_dmabuf) {
-        HYBRIS_ERROR("Wayland zwp_linux_dmabuf_v1 not available!\n");
+        HYBRIS_ERROR("lindroid-drm: Wayland zwp_linux_dmabuf_v1 not available!\n");
         abort();
     }
 
-    // Create a Wayland buffer using zwp_linux_dmabuf
+    auto* params = zwp_linux_dmabuf_v1_create_params(wl_dmabuf);
+    const native_handle_t* nh = reinterpret_cast<const native_handle_t*>(handle);
 
-    struct zwp_linux_buffer_params_v1 *params = zwp_linux_dmabuf_v1_create_params(wl_dmabuf);
-    HYBRIS_ERROR("zwp_linux_buffer_params_v1_add: fd: %d\n", dmabuf_fd);
-    zwp_linux_buffer_params_v1_add(params, dmabuf_fd, 0, 0,  stride * 4,  0, 0);
-    uint32_t req_format = (this->format == HAL_PIXEL_FORMAT_RGBX_8888) ? GBM_FORMAT_XRGB8888 : GBM_FORMAT_ABGR8888;
-    this->wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, req_format, 0);
+    if (!nh) {
+        fprintf(stderr, "lindroid-drm: NULL handle\n");
+        abort();
+    }
+
+    for (int i = 0; i < nh->numFds; i++)
+        zwp_linux_buffer_params_v1_add(params, nh->data[i], i, 0, stride * 4, 0, 0);
+
+    size_t buffer_size = sizeof(int) * (4 + nh->numInts);
+    std::vector<int> buffer(4 + nh->numInts);
+
+    buffer[0] = -1;
+    buffer[1] = nh->version;
+    buffer[2] = nh->numFds;
+    buffer[3] = nh->numInts;
+
+    for (int i = 0; i < nh->numInts; i++)
+        buffer[4 + i] = nh->data[nh->numFds + i];
+
+    int meta_fd = memfd_create("lindroid-meta", MFD_CLOEXEC);
+    if (ftruncate(meta_fd, buffer_size) != 0) {
+        fprintf(stderr, "lindroid-drm: ftruncate failed\n");
+        close(meta_fd);
+        abort();
+    }
+
+    if (pwrite(meta_fd, buffer.data(), buffer_size, 0) != (ssize_t)buffer_size) {
+        fprintf(stderr, "lindroid-drm: failed to write data into meta_fd\n");
+        close(meta_fd);
+        abort();
+    }
+
+    zwp_linux_buffer_params_v1_add(params, meta_fd, nh->numFds, 0, 1, 0, 0);
+    close(meta_fd);
+
+    uint32_t req_format = (format == HAL_PIXEL_FORMAT_RGBX_8888) ? GBM_FORMAT_XRGB8888 : GBM_FORMAT_ABGR8888;
+    wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, req_format, 0);
     zwp_linux_buffer_params_v1_destroy(params);
-
-    wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
+    wl_proxy_set_queue(reinterpret_cast<struct wl_proxy*>(wlbuffer), queue);
 }
 
 DrmWaylandBuffer::~DrmWaylandBuffer() {
-    if (bo) gbm_bo_destroy(bo);
-    if (dmabuf_fd >= 0) close(dmabuf_fd);
-    if (handle) native_handle_close(handle);
+    if (handle)
+        hybris_gralloc_release(handle, 1);
 }
 #endif // WANT_LINDROID_DRM
 // vim: noai:ts=4:sw=4:ss=4:expandtab
