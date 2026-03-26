@@ -165,7 +165,6 @@ public:
               struct wl_display *display,
               struct wl_event_queue *queue) override;
 
-    struct gbm_bo *bo;
     int dmabuf_fd;
     struct zwp_linux_dmabuf_v1 *wl_dmabuf;
 };
