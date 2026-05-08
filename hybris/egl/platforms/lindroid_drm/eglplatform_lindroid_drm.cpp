@@ -53,21 +53,41 @@ extern "C" {
 #include "evdi_drm.h"
 #include <hybris/gralloc/gralloc.h>
 #include "wayland_window.h"
+#include "gbm_native_window.h"
 
-struct WaylandDisplay {
-        _EGLDisplay base;
+#include <stdint.h>
 
-        // this is protected via mutex in egl.c
-        int init_count;
-        wl_display *wl_dpy;
-        wl_event_queue *queue;
-        wl_display *wl_dpy_wrapper;
+struct LindroidDisplay {
+    _EGLDisplay base;
+    enum { AUTO, WAYLAND, GBM } mode;
+
+    EGLNativeDisplayType native_display;
+    wl_display *wl_dpy;
+    bool owns_wl_dpy;
 };
 
 static const char *  (*_eglQueryString)(EGLDisplay dpy, EGLint name) = NULL;
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
 
-//static std::vector<HWComposerNativeWindow *> _nativewindows;
+static bool lindroid_native_display_is_gbm(EGLNativeDisplayType display)
+{
+    const struct gbm_device *gbm;
+
+    if (!display)
+        return false;
+
+    gbm = reinterpret_cast<const struct gbm_device *>(display);
+
+    if (gbm->v0.backend_version != GBM_BACKEND_ABI_VERSION)
+        return false;
+    if (gbm->v0.fd < 0)
+        return false;
+    if (!gbm->v0.bo_create || !gbm->v0.surface_create)
+        return false;
+
+    return true;
+}
+
 static std::mutex _nativewindows_mutex;
 int drm_fd = -1;
 struct gbm_device *gbm_dev = nullptr;
@@ -140,7 +160,7 @@ int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle, boo
 	return ret;
 }
 
-static uint32_t get_gbm_pixel_format(int hal_format)
+uint32_t get_gbm_pixel_format(int hal_format)
 {
     uint32_t format;
 
@@ -178,7 +198,7 @@ static uint32_t get_gbm_pixel_format(int hal_format)
 }
 
 extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
-                                                                    native_handle_t *native, EGLClientBuffer *buffer)
+                                                                     native_handle_t *native, EGLClientBuffer *buffer)
 {
 	if(!native) {
 		fprintf(stderr, "egl_get_win_buf: native handle cant be NULL!");
@@ -190,74 +210,134 @@ extern "C" EGLBoolean egl_get_win_buf(EGLint width, EGLint height, EGLint usage,
 	return EGL_TRUE;
 }
 
+static int lindroid_init_evdi()
+{
+	if (drm_fd >= 0)
+		return 0;
+
+	drm_fd = evdi_open("/dev/dri/by-path/platform-evdi-lindroid.0-card");
+	if (drm_fd < 0)
+		return -1;
+
+	gbm_dev = gbm_create_device(drm_fd);
+	return gbm_dev ? 0 : -1;
+}
+
+static bool lindroid_native_window_is_gbm(EGLNativeWindowType win)
+{
+    struct gbm_hybris_surface *surf = (struct gbm_hybris_surface *)win;
+    struct gbm_device *gbm;
+
+    if (!surf)
+        return false;
+
+    gbm = surf->base.gbm;
+    if (!gbm)
+        return false;
+
+    if (gbm->v0.backend_version != GBM_BACKEND_ABI_VERSION)
+        return false;
+
+    if (gbm->v0.fd < 0)
+        return false;
+
+    return gbm->v0.bo_create && gbm->v0.surface_create &&
+           surf->base.v0.width > 0 && surf->base.v0.height > 0;
+}
+
 extern "C" void lindroid_drmws_init_module(struct ws_egl_interface *egl_iface)
 {
-	// TBD: Is that the best way?
-	if(drm_fd < 0)
-		drm_fd = evdi_open("/dev/dri/by-path/platform-evdi-lindroid.0-card");
-	
-	if(!gbm_dev)
-		gbm_dev = gbm_create_device(drm_fd);
-	
 	hybris_gralloc_initialize(0);
 	eglplatformcommon_init(egl_iface);
 }
 
 extern "C" _EGLDisplay *lindroid_drmws_GetDisplay(EGLNativeDisplayType display)
 {
-	WaylandDisplay *wdpy = new WaylandDisplay;
-	wdpy->wl_dpy = (wl_display *) display;
-	if (!wdpy->wl_dpy) {
-		wdpy->wl_dpy = wl_display_connect(NULL);
-		if (!wdpy->wl_dpy) {
-			fprintf(stderr, "Fatal: failed to connect to the server!");
-			abort();
-		}
-	}
+    LindroidDisplay *ldpy = new LindroidDisplay();
+    ldpy->native_display = display;
+    ldpy->wl_dpy = nullptr;
+    ldpy->owns_wl_dpy = false;
 
-	return &wdpy->base;
+    if (display && lindroid_native_display_is_gbm(display)) {
+        ldpy->mode = LindroidDisplay::GBM;
+    } else if (display) {
+        ldpy->mode = LindroidDisplay::WAYLAND;
+        ldpy->wl_dpy = (wl_display *)display;
+    } else {
+        ldpy->mode = LindroidDisplay::AUTO;
+    }
+
+    return &ldpy->base;
 }
 
 extern "C" void lindroid_drmws_releaseDisplay(_EGLDisplay *dpy)
 {
-	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
-	delete wdpy;
+    LindroidDisplay *ldpy = (LindroidDisplay *)dpy;
+
+    if (ldpy->owns_wl_dpy && ldpy->wl_dpy)
+        wl_display_disconnect(ldpy->wl_dpy);
+
+    delete ldpy;
 }
 
 extern "C" void lindroid_drmws_eglInitialized(_EGLDisplay *dpy)
 {
-	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
 }
 
 extern "C" void lindroid_drmws_Terminate(_EGLDisplay *dpy)
 {
-	// Do we even have anything to clean up?
 }
 
 extern "C" EGLNativeWindowType lindroid_drmws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
 {
-	struct wl_egl_window *wl_window = (struct wl_egl_window*) win;
-	struct wl_display *wl_display = (struct wl_display*) display;
+    LindroidDisplay *ldpy = (LindroidDisplay *)display;
+    bool use_gbm = false;
 
-	if (wl_window == 0 || wl_display == 0) {
-		HYBRIS_ERROR("Running with EGL_PLATFORM=wayland without setup wayland environment is not possible");
-		HYBRIS_ERROR("If you want to run a standlone EGL client do it like this:");
-		HYBRIS_ERROR(" $ export EGL_PLATFORM=null");
-		HYBRIS_ERROR(" $ test_glevs2");
-		abort();
-	}
+    if (!win) {
+        HYBRIS_ERROR("Invalid native window");
+        abort();
+    }
 
-	WaylandDisplay *wdpy = (WaylandDisplay *)display;
+    if (ldpy->mode == LindroidDisplay::GBM)
+        use_gbm = true;
+    else if (ldpy->mode == LindroidDisplay::AUTO &&
+             ldpy->native_display &&
+             lindroid_native_display_is_gbm(ldpy->native_display))
+        use_gbm = true;
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, NULL);
-	window->common.incRef(&window->common);
-	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
+    if (use_gbm) {
+        GbmNativeWindow *window = new GbmNativeWindow((gbm_surface *)win);
+        window->common.incRef(&window->common);
+        return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
+    }
+
+    struct wl_egl_window *wl_window = (struct wl_egl_window *)win;
+
+    if (!wl_window) {
+        HYBRIS_ERROR("Running with EGL_PLATFORM=wayland without setup wayland environment is not possible");
+        HYBRIS_ERROR("If you want to run a standlone EGL client do it like this:");
+        HYBRIS_ERROR(" $ export EGL_PLATFORM=null");
+        HYBRIS_ERROR(" $ test_glevs2");
+        abort();
+    }
+
+    if (!ldpy->wl_dpy) {
+        ldpy->wl_dpy = wl_display_connect(NULL);
+        if (!ldpy->wl_dpy) {
+            fprintf(stderr, "Fatal: failed to connect to the server!");
+            abort();
+        }
+        ldpy->owns_wl_dpy = true;
+    }
+
+    WaylandNativeWindow *window = new WaylandNativeWindow(wl_window, ldpy->wl_dpy, NULL);
+    window->common.incRef(&window->common);
+    return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
 
 extern "C" void lindroid_drmws_DestroyWindow(EGLNativeWindowType win)
 {
-	WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-	window->common.decRef(&window->common);
+	((struct ANativeWindow *)win)->common.decRef(&((struct ANativeWindow *)win)->common);
 }
 
 extern "C" __eglMustCastToProperFunctionPointerType lindroid_drmws_eglGetProcAddress(const char *procname)
@@ -329,6 +409,11 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 
 	if (stride == 0) {
 		fprintf(stderr, "Fatal: EGL_DMA_BUF_PLANE0_PITCH_EXT is missing from EGL_LINUX_DMA_BUF_EXT");
+		abort();
+	}
+
+	if (lindroid_init_evdi() < 0) {
+		fprintf(stderr, "Fatal: failed to open evdi device\n");
 		abort();
 	}
 
@@ -417,20 +502,29 @@ extern "C" const char *lindroid_drmws_eglQueryString(EGLDisplay dpy, EGLint name
 
 extern "C" void lindroid_drmws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects)
 {
-        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-        window->prepareSwap(damage_rects, damage_n_rects);
+    (void)dpy;
+    if (!win)
+        return;
+
+    static_cast<EGLBaseNativeWindow *>((struct ANativeWindow *)win)->prepareSwap(damage_rects, damage_n_rects);
 }
 
 extern "C" void lindroid_drmws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
 {
-        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-        window->finishSwap();
+    (void)dpy;
+    if (!win)
+        return;
+
+    static_cast<EGLBaseNativeWindow *>((struct ANativeWindow *)win)->finishSwap();
 }
 
 extern "C" void lindroid_drmws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval)
 {
-        WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-        window->setSwapInterval(interval);
+    (void)dpy;
+    if (!win)
+        return;
+
+    static_cast<EGLBaseNativeWindow *>((struct ANativeWindow *)win)->setSwapInterval(interval);
 }
 
 extern "C" void lindroid_drmwws_getConfigAttrib(EGLDisplay *dpy, EGLConfig *config, EGLint *attribute, EGLint *value)

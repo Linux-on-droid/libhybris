@@ -36,6 +36,10 @@ public:
 		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>(static_cast<ANativeWindow *>(this));
 		return ret;
 	}
+
+	virtual void finishSwap() {}
+	virtual void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects) { (void)damage_rects; (void)damage_n_rects; }
+	virtual int setSwapInterval(int) { return 0; }
 };
 
 #endif

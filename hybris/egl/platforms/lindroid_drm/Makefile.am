@@ -20,7 +20,9 @@ linux-dmabuf-unstable-v1-protocol.c: $(WAYLAND_DMABUF_XML)
 eglplatform_lindroid_drm_la_SOURCES = \
 	eglplatform_lindroid_drm.cpp \
 	$(top_srcdir)/platforms/wayland/wayland_window_common.cpp \
-	$(top_srcdir)/egl/platforms/wayland/wayland_window.cpp
+	$(top_srcdir)/egl/platforms/wayland/wayland_window.cpp \
+	gbm_native_window_buffer.cpp \
+	gbm_native_window.cpp
 
 nodist_eglplatform_lindroid_drm_la_SOURCES = \
 	linux-dmabuf-unstable-v1-protocol.c
