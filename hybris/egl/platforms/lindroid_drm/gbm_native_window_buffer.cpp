@@ -9,12 +9,26 @@
 #include "gbm_native_window_buffer.h"
 #include "evdi_drm.h"
 
+extern struct gbm_device *gbm_dev;
 extern int evdi_open(char *device_path);
 extern int evdi_get_native_handle_t(int native_handle_id, native_handle_t **handle, bool import);
 extern int drm_fd;
 extern uint32_t get_gbm_pixel_format(int hal_format);
 
-void GbmNativeWindowBuffer::init(unsigned int w, unsigned int h, int _format, uint64_t _usage, gbm_surface *_surface, gbm_device *_gbm) {
+static int lindroid_init_evdi()
+{
+    if (drm_fd >= 0)
+        return 0;
+
+    drm_fd = evdi_open("/dev/dri/by-path/platform-evdi-lindroid.0-card");
+    if (drm_fd < 0)
+        return -1;
+
+    gbm_dev = gbm_create_device(drm_fd);
+    return gbm_dev ? 0 : -1;
+}
+
+void GbmNativeWindowBuffer::init(unsigned int w, unsigned int h, int _format, uint64_t _usage, gbm_surface *_surface) {
     if (bo) {
         gbm_bo_destroy(&bo->base);
         bo = nullptr;
@@ -39,18 +53,18 @@ void GbmNativeWindowBuffer::init(unsigned int w, unsigned int h, int _format, ui
     usage = _usage;
     surface = _surface;
 
-    if (!_gbm) {
-        HYBRIS_ERROR("GBM device was not provided for this surface\n");
+    if (lindroid_init_evdi() < 0 || !gbm_dev) {
+        HYBRIS_ERROR("Failed to initialize EVDI/GBM device\n");
         abort();
     }
 
-    if (_gbm->v0.fd < 0) {
+    if (gbm_dev->v0.fd < 0) {
         HYBRIS_ERROR("GBM device has an invalid fd\n");
         abort();
     }
 
     uint32_t req_format = get_gbm_pixel_format(_format);
-    bo = (gbm_hybris_bo *)gbm_bo_create(_gbm, w, h, req_format, GBM_BO_USE_RENDERING | GBM_BO_USE_SCANOUT);
+    bo = (gbm_hybris_bo *)gbm_bo_create(gbm_dev, w, h, req_format, GBM_BO_USE_RENDERING | GBM_BO_USE_SCANOUT);
     if (!bo) {
         HYBRIS_ERROR("Failed to create GBM BO\n");
         abort();

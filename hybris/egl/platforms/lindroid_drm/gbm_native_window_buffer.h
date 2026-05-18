@@ -39,7 +39,7 @@ struct GbmNativeWindowBuffer : public BaseNativeWindowBuffer {
     ~GbmNativeWindowBuffer();
 
     void init(unsigned int w, unsigned int h, int _format, uint64_t _usage,
-              gbm_surface *_surface, gbm_device *_gbm);
+              gbm_surface *_surface);
 
     gbm_hybris_bo *bo;
     gbm_surface *surface;

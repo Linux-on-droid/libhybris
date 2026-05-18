@@ -564,6 +564,9 @@ EGLBoolean eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLC
 
 	ret = (*_eglMakeCurrent)(hybris_egl_get_real_display(dpy), draw, read, context);
 
+	extern __thread int egl_hybris_context_current;
+	egl_hybris_context_current = (context != EGL_NO_CONTEXT && ret);
+
 #ifdef WANT_WAYLAND
 	if (loaded_ws == EGL_PLATFORM_WAYLAND_KHR && ret)
 		current_display = dpy;

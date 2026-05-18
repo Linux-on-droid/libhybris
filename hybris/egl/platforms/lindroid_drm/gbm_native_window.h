@@ -27,9 +27,8 @@ public:
     void lock();
     void unlock();
     void resize(unsigned int width, unsigned int height);
-    void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects) override;
 
-    int setSwapInterval(int interval);
+    int setSwapInterval(int);
     void finishSwap() override;
 
 protected:
@@ -53,7 +52,6 @@ protected:
 
 private:
     gbm_hybris_surface* hybrisSurface() const;
-    bool isBufferLockedBySurface(const GbmNativeWindowBuffer *buffer) const;
     void resyncSurfaceBoList();
 
     gbm_device *m_gbm = nullptr;

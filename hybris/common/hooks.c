@@ -96,6 +96,8 @@ static locale_t hybris_locale;
 static int locale_inited = 0;
 static hybris_hook_cb hook_callback = NULL;
 
+__thread int egl_hybris_context_current = 0;
+
 #ifdef WANT_ARM_TRACING
 static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, hybris_tls_patcher_funcs_t* tls_patcher_funcs, void *(_create_wrapper)(const char*, void*, int), int wrapping_enabled) = NULL;
 #else

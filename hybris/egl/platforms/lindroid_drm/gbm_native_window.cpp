@@ -133,27 +133,6 @@ int GbmNativeWindow::setSwapInterval(int interval) {
     return NO_ERROR;
 }
 
-void GbmNativeWindow::prepareSwap(EGLint *damage_rects, EGLint damage_n_rects) {
-    (void)damage_rects;
-    (void)damage_n_rects;
-}
-
-bool GbmNativeWindow::isBufferLockedBySurface(const GbmNativeWindowBuffer *buffer) const
-{
-    gbm_hybris_surface *hsurf = hybrisSurface();
-    unsigned int i;
-
-    if (!hsurf || !buffer || !buffer->bo)
-        return false;
-
-    for (i = 0; i < hsurf->locked_count; ++i) {
-        if (hsurf->locked[i] == buffer->bo)
-            return true;
-    }
-
-    return false;
-}
-
 int GbmNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd) {
     GbmNativeWindowBuffer *bnb = nullptr;
     std::list<GbmNativeWindowBuffer *>::iterator it;
@@ -166,8 +145,6 @@ int GbmNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd
         for (; it != m_bufList.end(); ++it) {
             if ((*it)->busy)
                 continue;
-            if (isBufferLockedBySurface(*it))
-                continue;
             if ((*it)->youngest)
                 continue;
             break;
@@ -175,7 +152,7 @@ int GbmNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd
 
         if (it == m_bufList.end()) {
             for (it = m_bufList.begin(); it != m_bufList.end(); ++it) {
-                if (!(*it)->busy && !isBufferLockedBySurface(*it))
+                if (!(*it)->busy)
                     break;
             }
         }
@@ -218,7 +195,7 @@ int GbmNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd
         m_fronted.remove(bnb);
         delete bnb;
         bnb = new GbmNativeWindowBuffer();
-        bnb->init(m_width, m_height, m_hal_format, m_usage, m_surface, m_gbm);
+        bnb->init(m_width, m_height, m_hal_format, m_usage, m_surface);
         *it = bnb;
         resyncSurfaceBoList();
     }

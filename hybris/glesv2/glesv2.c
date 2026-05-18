@@ -109,8 +109,31 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetShaderSource, GLuint, GLsizei, GLsi
 
 const GLubyte *(*_glGetString) (GLenum name) = NULL;
 
+static const char *safe_glGetString(GLenum name)
+{
+	switch (name) {
+	case GL_VENDOR:
+		return "libhybris";
+	case GL_RENDERER:
+		return "libhybris";
+	case GL_VERSION:
+		return "OpenGL ES 2.0 libhybris";
+	case GL_EXTENSIONS:
+		return "";
+	case GL_SHADING_LANGUAGE_VERSION:
+		return "OpenGL ES GLSL ES 1.00";
+	default:
+		return NULL;
+	}
+}
+
 const GLubyte *glGetString (GLenum name)
 {
+	extern __thread int egl_hybris_context_current;
+
+	if (!egl_hybris_context_current)
+		return (const GLubyte *)safe_glGetString(name);
+
 	HYBRIS_DLSYSM(glesv2, &_glGetString, "glGetString");
 	const char *ret = (const char *)_glGetString(name);
         if (ret && name == GL_EXTENSIONS)
