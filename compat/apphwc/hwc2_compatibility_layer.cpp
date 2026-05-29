@@ -38,6 +38,13 @@ public:
         return ndk::ScopedAStatus::ok();
     }
 
+    ndk::ScopedAStatus onAppForegroundChanged(int32_t in_sequenceId, int64_t in_display, bool in_foreground) {
+        listener->on_dpms_received(listener, in_sequenceId,
+                                   static_cast<hwc2_display_t>(in_display),
+                                   static_cast<int32_t>(in_foreground));
+        return ndk::ScopedAStatus::ok();
+    }
+
 private:
     HWC2EventListener *listener;
 };
