@@ -40,11 +40,16 @@ extern "C" {
     typedef void (*on_refresh_received_callback)(HWC2EventListener* self,
                     int32_t sequenceId, hwc2_display_t display);
 
+    typedef void (*on_dpms_received_callback)(HWC2EventListener* self,
+                    int32_t sequenceId, hwc2_display_t display,
+                    int32_t powerMode);
+
     struct HWC2EventListener
     {
         on_vsync_received_callback on_vsync_received;
         on_hotplug_received_callback on_hotplug_received;
         on_refresh_received_callback on_refresh_received;
+        on_dpms_received_callback on_dpms_received;
     };
 
     typedef struct HWC2DisplayConfig {
