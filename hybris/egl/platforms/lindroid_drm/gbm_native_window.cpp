@@ -425,6 +425,15 @@ gbm_hybris_surface* GbmNativeWindow::hybrisSurface() const
     return reinterpret_cast<gbm_hybris_surface*>(m_surface);
 }
 
+static bool surfaceHasBo(gbm_hybris_surface *hsurf, gbm_hybris_bo *bo)
+{
+    for (unsigned i = 0; i < hsurf->bo_count; ++i) {
+        if (hsurf->bo[i] == bo)
+            return true;
+    }
+    return false;
+}
+
 void GbmNativeWindow::resyncSurfaceBoList() {
     gbm_hybris_surface* hsurf = hybrisSurface();
     if (!hsurf)
@@ -448,4 +457,16 @@ void GbmNativeWindow::resyncSurfaceBoList() {
             break;
         }
     }
+    for (unsigned i = 0; i < hsurf->locked_count; ) {
+        if (surfaceHasBo(hsurf, hsurf->locked[i])) {
+            ++i;
+            continue;
+        }
+
+        for (unsigned j = i + 1; j < hsurf->locked_count; ++j)
+            hsurf->locked[j - 1] = hsurf->locked[j];
+
+        hsurf->locked[hsurf->locked_count - 1] = nullptr;
+        hsurf->locked_count--;
     }
+}
