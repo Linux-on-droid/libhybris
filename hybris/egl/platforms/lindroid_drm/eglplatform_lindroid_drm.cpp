@@ -396,9 +396,12 @@ extern "C" void lindroid_drmws_passthroughImageKHR(EGLContext *ctx, EGLenum *tar
 
 extern "C" void lindroid_drmws_destroyImageKHR(EGLImageKHR image) {
 	struct egl_image *img = (egl_image*)image;
-	if(img->ws_buffer) {
-		native_handle_close(((ANativeWindowBuffer*)img->ws_buffer)->handle);
-	}
+	if (!img || !img->ws_buffer)
+		return;
+
+	ANativeWindowBuffer *buf = (ANativeWindowBuffer*)img->ws_buffer;
+	img->ws_buffer = NULL;
+	buf->common.decRef(&buf->common);
 }
 
 extern "C" const char *lindroid_drmws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
