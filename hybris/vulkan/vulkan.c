@@ -104,6 +104,24 @@ VkResult vkEnumerateInstanceExtensionProperties(const char* pLayerName, uint32_t
     return ws_vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties);
 }
 
+static VkResult (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR* pSurfaceCapabilities) = NULL;
+
+VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR* pSurfaceCapabilities)
+{
+    VkResult result;
+
+    if (_vkGetPhysicalDeviceSurfaceCapabilitiesKHR == NULL) {
+        HYBRIS_DLSYSM(vulkan, &_vkGetPhysicalDeviceSurfaceCapabilitiesKHR, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+    }
+
+    result = (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(physicalDevice, surface, pSurfaceCapabilities);
+    if (result == VK_SUCCESS && pSurfaceCapabilities != NULL) {
+        pSurfaceCapabilities->currentExtent.width = 0xFFFFFFFF;
+        pSurfaceCapabilities->currentExtent.height = 0xFFFFFFFF;
+    }
+    return result;
+}
+
 #ifdef WANT_WAYLAND
 VkResult vkCreateWaylandSurfaceKHR(VkInstance instance,
         const VkWaylandSurfaceCreateInfoKHR* pCreateInfo,
@@ -138,6 +156,8 @@ PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
         return (PFN_vkVoidFunction)vkCreateInstance;
     } else if (!strcmp(pName, "vkGetInstanceProcAddr")) {
         return (PFN_vkVoidFunction)vkGetInstanceProcAddr;
+    } else if (!strcmp(pName, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR")) {
+        return (PFN_vkVoidFunction)vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
 #ifdef WANT_WAYLAND
     } else if (!strcmp(pName, "vkCreateWaylandSurfaceKHR")) {
         return (PFN_vkVoidFunction)vkCreateWaylandSurfaceKHR;
@@ -358,7 +378,6 @@ VULKAN_IDLOAD(vkGetDeviceImageMemoryRequirements);
 VULKAN_IDLOAD(vkGetDeviceImageSparseMemoryRequirements);
 #endif
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceSupportKHR);
-VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceFormatsKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfacePresentModesKHR);
 VULKAN_IDLOAD(vkCreateSwapchainKHR);

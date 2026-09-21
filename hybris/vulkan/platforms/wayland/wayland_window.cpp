@@ -250,8 +250,6 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 
     }
 
-    presentBuffer(wnb);
-
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_waiting_for_fence", "-%p", wnb);
     if (fenceFd >= 0)
@@ -261,6 +259,8 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     }
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer_waiting_for_fence", "-%p", wnb);
 #endif
+
+    presentBuffer(wnb);
 
     HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%lu", fronted.size());
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer", "-%p", wnb);

@@ -217,15 +217,17 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window,
     m_freeBufs = 0;
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
-    WaylandNativeWindow::setBufferCount(3);
 #ifdef WANT_LINDROID_DRM
+    this->wl_dmabuf = NULL;
+
     if(!m_android_wlegl) {
-        if (!display) return;
         struct wl_registry *registry = wl_display_get_registry(display);
         wl_registry_add_listener(registry, &registry_listener, &this->wl_dmabuf);
         wl_display_roundtrip(display);
+        wl_registry_destroy(registry);
     }
 #endif // WANT_LINDROID_DRM
+    WaylandNativeWindow::setBufferCount(3);
     HYBRIS_TRACE_END("wayland-platform", "create_window", "");
 }
 
@@ -734,8 +736,15 @@ void DrmWaylandBuffer::init(
         abort();
     }
 
-    for (int i = 0; i < nh->numFds; i++)
-        zwp_linux_buffer_params_v1_add(params, nh->data[i], i, 0, stride * 4, 0, 0);
+    for (int i = 0; i < nh->numFds; i++) {
+        int plane_fd = fcntl(nh->data[i], F_DUPFD_CLOEXEC, 0);
+        if (plane_fd < 0) {
+            fprintf(stderr, "lindroid-drm: failed to dup plane %d fd: %s\n",
+                    i, strerror(errno));
+            abort();
+        }
+        zwp_linux_buffer_params_v1_add(params, plane_fd, i, 0, stride * 4, 0, 0);
+    }
 
     size_t buffer_size = sizeof(int) * (4 + nh->numInts);
     std::vector<int> buffer(4 + nh->numInts);
@@ -761,8 +770,8 @@ void DrmWaylandBuffer::init(
         abort();
     }
 
+    // passes to wayland-client, which closes it after sending.
     zwp_linux_buffer_params_v1_add(params, meta_fd, nh->numFds, 0, 1, 0, 0);
-    close(meta_fd);
 
     uint32_t req_format = (format == HAL_PIXEL_FORMAT_RGBX_8888) ? GBM_FORMAT_XRGB8888 : GBM_FORMAT_ABGR8888;
     wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, req_format, 0);
