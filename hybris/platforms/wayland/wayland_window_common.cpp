@@ -44,6 +44,11 @@
 #include "linux-dmabuf-unstable-v1-client-protocol.h"
 #include <sys/mman.h>
 #include <vector>
+#ifdef HYBRIS_VULKAN_WS
+#include <sys/ioctl.h>
+#include <xf86drm.h>
+#include "evdi_drm.h"
+#endif
 #endif // WANT_LINDROID_DRM
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
@@ -503,7 +508,11 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 
 #ifdef WANT_LINDROID_DRM
     if(!m_android_wlegl) {
+#ifdef HYBRIS_VULKAN_WS
+        wnb = new EvdiWaylandBuffer(m_width, m_height, m_format, m_usage, wl_queue, this->wl_dmabuf);
+#else
         wnb = new DrmWaylandBuffer(m_width, m_height, m_format, m_usage, m_display, wl_queue, this->wl_dmabuf);
+#endif
     } else {
 #endif // WANT_LINDROID_DRM
 #ifndef HYBRIS_NO_SERVER_SIDE_BUFFERS
@@ -527,6 +536,24 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 
 int WaylandNativeWindow::setBufferCount(int cnt) {
     TRACE("cnt:%d", cnt);
+
+#ifdef HYBRIS_VULKAN_WS
+    /*
+     * A Wayland compositor keeps the most recently attached buffer as the
+     * surface's current content and only releases it once a newer buffer is
+     * attached, so one buffer of the pool is permanently unavailable.
+     *
+     * Android's swapchain dequeues every image up front in
+     * vkCreateSwapchainKHR and expects all of setBufferCount()'s buffers to be
+     * dequeueable. That holds the first time round, but on a swapchain
+     * re-create the previous swapchain's last frame is still on screen, so the
+     * driver comes up one buffer short and blocks in dequeueBuffer() waiting
+     * for a release that only its own next attach could trigger.
+     *
+     * Keep a spare so the driver always gets the count it asked for.
+     */
+    cnt += 1;
+#endif
 
     if ((int)m_bufList.size() == cnt)
         return NO_ERROR;
@@ -783,5 +810,175 @@ DrmWaylandBuffer::~DrmWaylandBuffer() {
     if (handle)
         hybris_gralloc_release(handle, 1);
 }
+
+#ifdef HYBRIS_VULKAN_WS
+
+static int evdi_auth_magic(int fd, drm_magic_t magic)
+{
+    drm_auth_t auth;
+    auth.magic = magic;
+    if (ioctl(fd, DRM_IOCTL_AUTH_MAGIC, &auth))
+        return -errno;
+    return 0;
+}
+
+static int lindroid_evdi_fd(void)
+{
+    static pthread_mutex_t evdi_mutex = PTHREAD_MUTEX_INITIALIZER;
+    static int fd = -1;
+
+    pthread_mutex_lock(&evdi_mutex);
+    if (fd < 0) {
+        const char *path = getenv("LINDROID_EVDI_CARD");
+        if (!path)
+            path = "/dev/dri/by-path/platform-evdi-lindroid.0-card";
+
+        fd = open(path, O_RDWR | O_CLOEXEC);
+        if (fd < 0) {
+            HYBRIS_ERROR("lindroid-drm: failed to open %s: %s\n", path, strerror(errno));
+        } else if (evdi_auth_magic(fd, 0) != -EACCES) {
+            if (ioctl(fd, DRM_IOCTL_DROP_MASTER, NULL) < 0) {
+                HYBRIS_ERROR("lindroid-drm: failed to drop master on %s: %s\n",
+                             path, strerror(errno));
+                close(fd);
+                fd = -1;
+            }
+        }
+    }
+    pthread_mutex_unlock(&evdi_mutex);
+
+    return fd;
+}
+
+EvdiWaylandBuffer::EvdiWaylandBuffer(
+    unsigned int w, unsigned int h, int _format, uint64_t _usage,
+    struct wl_event_queue *queue, struct zwp_linux_dmabuf_v1 *dmabuf)
+    : WaylandNativeWindowBuffer(), evdi_id(-1), wl_dmabuf(dmabuf)
+{
+    width = w;
+    height = h;
+    format = _format;
+    usage = _usage;
+
+    int fd = lindroid_evdi_fd();
+    if (fd < 0) {
+        HYBRIS_ERROR("lindroid-drm: no evdi node, cannot allocate buffer\n");
+        abort();
+    }
+
+    uint32_t pixel_stride = 0;
+    struct drm_evdi_gbm_create_buff create;
+    memset(&create, 0, sizeof(create));
+    create.width = w;
+    create.height = h;
+    create.format = (uint32_t)_format;
+    create.id = &evdi_id;
+    create.stride = &pixel_stride;
+
+    if (ioctl(fd, DRM_IOCTL_EVDI_GBM_CREATE_BUFF, &create) < 0) {
+        HYBRIS_ERROR("lindroid-drm: DRM_IOCTL_EVDI_GBM_CREATE_BUFF failed: %s\n",
+                     strerror(errno));
+        abort();
+    }
+
+    if (evdi_id <= 0 || pixel_stride == 0) {
+        HYBRIS_ERROR("lindroid-drm: invalid CREATE_BUFF reply: id=%d stride=%u\n",
+                     evdi_id, pixel_stride);
+        abort();
+    }
+
+    stride = (int)pixel_stride;
+
+    struct drm_evdi_gbm_get_buff get;
+    memset(&get, 0, sizeof(get));
+    get.id = evdi_id;
+    get.native_handle = malloc(max_native_handle_size);
+    if (!get.native_handle) {
+        HYBRIS_ERROR("lindroid-drm: out of memory for native handle\n");
+        abort();
+    }
+
+    if (ioctl(fd, DRM_IOCTL_EVDI_GBM_GET_BUFF, &get) < 0) {
+        HYBRIS_ERROR("lindroid-drm: DRM_IOCTL_EVDI_GBM_GET_BUFF(%d) failed: %s\n",
+                     evdi_id, strerror(errno));
+        free(get.native_handle);
+        abort();
+    }
+
+    native_handle_t *raw = (native_handle_t *)get.native_handle;
+    const native_handle_t *imported = NULL;
+
+    if (hybris_gralloc_import_buffer(raw, (buffer_handle_t *)&imported) == 0 && imported) {
+        handle = imported;
+        native_handle_close(raw);
+        native_handle_delete(raw);
+    } else {
+        HYBRIS_ERROR("lindroid-drm: failed to import buffer %d, using raw handle\n",
+                     evdi_id);
+        handle = raw;
+    }
+
+    common.incRef(&common);
+}
+
+void EvdiWaylandBuffer::init(
+    struct android_wlegl *android_wlegl,
+    struct wl_display *display,
+    struct wl_event_queue *queue)
+{
+    if (!wl_dmabuf) {
+        HYBRIS_ERROR("lindroid-drm: Wayland zwp_linux_dmabuf_v1 not available!\n");
+        abort();
+    }
+
+    auto *params = zwp_linux_dmabuf_v1_create_params(wl_dmabuf);
+
+    uint32_t byte_stride = (uint32_t)stride * 4u;
+    size_t size = (size_t)byte_stride * height;
+
+    int id_fd = memfd_create("lindroid-evdi-id", MFD_CLOEXEC);
+    if (id_fd < 0) {
+        HYBRIS_ERROR("lindroid-drm: memfd_create failed: %s\n", strerror(errno));
+        abort();
+    }
+
+    if (write(id_fd, &evdi_id, sizeof(int)) != (ssize_t)sizeof(int)) {
+        HYBRIS_ERROR("lindroid-drm: failed to write evdi id into memfd\n");
+        close(id_fd);
+        abort();
+    }
+
+    if (ftruncate(id_fd, size) < 0) {
+        HYBRIS_ERROR("lindroid-drm: ftruncate failed: %s\n", strerror(errno));
+        close(id_fd);
+        abort();
+    }
+
+    zwp_linux_buffer_params_v1_add(params, id_fd, 0, 0, byte_stride, 0, 0);
+
+    uint32_t req_format = (format == HAL_PIXEL_FORMAT_RGBX_8888) ? GBM_FORMAT_XRGB8888
+                                                                 : GBM_FORMAT_ABGR8888;
+    wlbuffer = zwp_linux_buffer_params_v1_create_immed(params, width, height, req_format, 0);
+    zwp_linux_buffer_params_v1_destroy(params);
+    wl_proxy_set_queue(reinterpret_cast<struct wl_proxy *>(wlbuffer), queue);
+}
+
+EvdiWaylandBuffer::~EvdiWaylandBuffer()
+{
+    if (handle)
+        hybris_gralloc_release(handle, 1);
+
+    if (evdi_id > 0) {
+        int fd = lindroid_evdi_fd();
+        struct drm_evdi_gbm_del_buff del;
+        memset(&del, 0, sizeof(del));
+        del.id = evdi_id;
+        if (fd >= 0 && ioctl(fd, DRM_IOCTL_EVDI_GBM_DEL_BUFF, &del) < 0)
+            HYBRIS_ERROR("lindroid-drm: DRM_IOCTL_EVDI_GBM_DEL_BUFF(%d) failed: %s\n",
+                         evdi_id, strerror(errno));
+        evdi_id = -1;
+    }
+}
+#endif // HYBRIS_VULKAN_WS
 #endif // WANT_LINDROID_DRM
 // vim: noai:ts=4:sw=4:ss=4:expandtab

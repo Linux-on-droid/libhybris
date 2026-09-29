@@ -168,6 +168,39 @@ public:
     int dmabuf_fd;
     struct zwp_linux_dmabuf_v1 *wl_dmabuf;
 };
+
+#ifdef HYBRIS_VULKAN_WS
+/*
+ * evdi-id buffers.
+ *
+ * Instead of allocating through gralloc locally and shipping the native handle
+ * inline (DrmWaylandBuffer), the buffer is allocated by create-disp through the
+ * evdi fake-DRM node and referred to by its registry id. On the wire it is a
+ * single "plane" whose fd is a memfd holding that id -- byte for byte the same
+ * encoding libgbm-hybris' gbm_bo_get_fd() produces, so compositor-allocated
+ * (GBM) and client-allocated (WSI) buffers are indistinguishable to the
+ * importer.
+ */
+class EvdiWaylandBuffer : public WaylandNativeWindowBuffer
+{
+public:
+    EvdiWaylandBuffer(unsigned int w,
+                      unsigned int h,
+                      int _format,
+                      uint64_t _usage,
+                      struct wl_event_queue *queue,
+                      struct zwp_linux_dmabuf_v1 *wl_dmabuf);
+    ~EvdiWaylandBuffer();
+
+    // android_wlegl will be ignored
+    void init(struct android_wlegl *android_wlegl,
+              struct wl_display *display,
+              struct wl_event_queue *queue) override;
+
+    int evdi_id;
+    struct zwp_linux_dmabuf_v1 *wl_dmabuf;
+};
+#endif // HYBRIS_VULKAN_WS
 #endif
 #endif
 // vim: noai:ts=4:sw=4:ss=4:expandtab

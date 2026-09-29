@@ -27,9 +27,11 @@ nodist_vulkanplatform_lindroid_drm_la_SOURCES = \
 
 vulkanplatform_lindroid_drm_la_CXXFLAGS = \
 	-DWANT_LINDROID_DRM \
+	-DHYBRIS_VULKAN_WS \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/platforms/wayland \
+	-I$(top_srcdir)/egl/platforms/lindroid_drm \
 	-I$(top_builddir)/platforms/common \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/vulkan \

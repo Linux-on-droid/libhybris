@@ -9,7 +9,7 @@ libvulkan_la_SOURCES = \
 	vulkan.c \
 	ws.c
 
-libvulkan_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/common $(ANDROID_HEADERS_CFLAGS) -DPKGLIBDIR="\"$(pkglibdir)/\""
+libvulkan_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/common -I$(top_srcdir)/egl/platforms/lindroid_drm $(LIBDRM_CFLAGS) $(ANDROID_HEADERS_CFLAGS) -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_TRACE
 libvulkan_la_CFLAGS += -DDEBUG
 endif
